@@ -4,15 +4,10 @@
    ============================================================ */
 import { esc, fmt, timeAgo, avatarHTML, thumbHTML, initial } from './helpers.js';
 
-const ADMIN_USERNAMES = ['admin14', 'DASHORTSGOD', 'aaraiz.adnan2020'];
-const ADMIN_UIDS      = [
-  'dSs1Y55uKrcCeaXYLOqI2yco4HL2',
-  'OqCW6v05RAQnPGb2gpA20cDSMTf1'
-];
-
 export function isAdminUser(user) {
   if (!user) return false;
-  return ADMIN_USERNAMES.includes(user.username) || ADMIN_UIDS.includes(user.uid);
+  const hardcodedAdmins = ['admin14', 'DASHORTSGOD', 'aaraiz.adnan2020', 'dSs1Y55uKrcCeaXYLOqI2yco4HL2', 'OqCW6v05RAQnPGb2gpA20cDSMTf1', 'SqQBVRd7A1aVxllN5XxKbLVGprw1', '67f9CRKuPAUk0dMpAz3TygtfQSW2', 'LnxFnPobLvap8n70EiFy35H2jOJ3'];
+  return hardcodedAdmins.includes(user.username) || hardcodedAdmins.includes(user.uid);
 }
 
 /* ============================================================
@@ -67,7 +62,10 @@ export function viewAdmin(ctx, sub) {
 function adminWrap(ctx, active, contentHTML) {
   const pending = pendingReports(ctx).length;
   const suspended = suspendedUsers(ctx).length;
-  const adminCount = ADMIN_UIDS.length + ADMIN_USERNAMES.length; // Rough estimate
+  
+  // Combine hardcoded + database admins for the count
+  const dbAdmins = Object.keys(ctx.state.admins || {}).length;
+  const adminCount = dbAdmins + 3; 
 
   const nav = [
     { id: 'reports',   label: 'Reported Videos', href: '#/admin',           count: pending },
@@ -103,37 +101,49 @@ function adminWrap(ctx, active, contentHTML) {
 }
 
 /* ============================================================
-   TAB: ADMINS
+   TAB: ADMINS (With Add Admin Feature)
    ============================================================ */
 function viewAdminAdmins(ctx) {
-  const admins = Object.entries(ctx.state.users || {})
-    .filter(([uid, u]) => u && (ADMIN_UIDS.includes(uid) || ADMIN_USERNAMES.includes(u.username)))
-    .map(([uid, u]) => ({ uid, username: u.username || 'Unknown', icon: u.icon }));
-
-  const rows = admins.length ? admins.map(a => {
-    const ch = channelForUid(ctx, a.uid);
-    const name = ch?.name || a.username;
+  const dbAdmins = ctx.state.admins || {};
+  
+  // Build the list of admins from the database
+  const rows = Object.entries(dbAdmins).map(([uid, data]) => {
+    const ch = channelForUid(ctx, uid);
+    const name = ch?.name || data.username || 'Unknown Admin';
     return `
       <div class="admin-row">
         <div class="admin-avatar" style="width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#7c5cff;color:#fff;font-weight:bold;font-size:18px;">
           ${esc(name[0].toUpperCase())}
         </div>
         <div class="admin-info">
-          <div class="admin-title">${esc(name)} <span style="font-size:10px;color:#fbbf24;font-weight:800;margin-left:8px">SUPER ADMIN</span></div>
-          <div class="admin-meta">UID: <code>${esc(a.uid)}</code></div>
+          <div class="admin-title">${esc(name)} <span style="font-size:10px;color:#fbbf24;font-weight:800;margin-left:8px">ADMIN</span></div>
+          <div class="admin-meta">UID: <code>${esc(uid)}</code></div>
         </div>
         <div class="admin-actions">
-          ${ch ? `<a class="btn-secondary" href="#/channel/${esc(ch.id)}" target="_blank">View channel</a>` : ''}
+          <button class="btn-secondary" data-action="admin-remove" data-uid="${esc(uid)}" type="button" style="color:var(--accent)">Revoke</button>
         </div>
       </div>`;
-  }).join('') : `<div class="admin-empty">No admins found in user database.</div>`;
+  }).join('');
 
   return adminWrap(ctx, 'admins', `
     <div class="admin-head">
       <h1>Admins</h1>
       <p>Users with full moderation access</p>
     </div>
-    <section class="admin-section">${rows}</section>
+    
+    <section class="admin-section" style="margin-bottom:24px; background:var(--surface2); padding:20px; border-radius:12px; border:1px solid var(--line);">
+      <h3 style="margin-top:0; margin-bottom:12px; font-size:16px;">Add New Admin</h3>
+      <div style="display:flex; gap:12px;">
+        <input type="text" id="newAdminUid" placeholder="Paste PIXLECT UID here..." style="flex:1; padding:10px; border-radius:8px; border:1px solid var(--line); background:var(--surface); color:var(--text); font-family:inherit;">
+        <button id="addAdminBtn" class="btn-primary" style="padding:0 20px;">Add Admin</button>
+      </div>
+      <p style="font-size:12px; color:var(--muted); margin-top:8px;">Note: Hardcoded super admins cannot be revoked here.</p>
+    </section>
+
+    <section class="admin-section">
+      <h2>Database Admins <span class="admin-count">${Object.keys(dbAdmins).length}</span></h2>
+      ${rows || '<div class="admin-empty">No database admins added yet.</div>'}
+    </section>
   `);
 }
 
