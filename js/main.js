@@ -102,9 +102,9 @@ try {
 } catch (_) {}
 
 /* ============================================================
-   ADMINS
+   ADMINS (HARDCODED)
    ============================================================ */
-const ADMIN_USERNAMES = ['admin14', 'DASHORTSGOD', 'aaraiz.adnan2020'];
+const ADMIN_USERNAMES = ['admin14', 'DASHORTSGOD', 'aaraiz.adnan2020', 'tope.gaming14'];
 const ADMIN_UIDS      = [
   'dSs1Y55uKrcCeaXYLOqI2yco4HL2',
   'OqCW6v05RAQnPGb2gpA20cDSMTf1',
@@ -116,9 +116,18 @@ const ADMIN_UIDS      = [
 function isAdmin() {
   if (!PIXLECT.user) return false;
   
-  if (ADMIN_USERNAMES.includes(PIXLECT.user.username) || ADMIN_UIDS.includes(PIXLECT.user.uid)) {
-    return true;
-  }
+  // DEBUG LOGS
+  console.log("--- ADMIN CHECK ---");
+  console.log("Current Username:", PIXLECT.user.username);
+  console.log("Current UID:", PIXLECT.user.uid);
+  
+  const isNameMatch = ADMIN_USERNAMES.includes(PIXLECT.user.username);
+  const isUidMatch = ADMIN_UIDS.includes(PIXLECT.user.uid);
+  
+  console.log("Matches Username List?", isNameMatch);
+  console.log("Matches UID List?", isUidMatch);
+
+  if (isNameMatch || isUidMatch) return true;
   
   if (state.admins && state.admins[PIXLECT.user.uid]) {
     return true;
@@ -532,7 +541,6 @@ async function deleteChannel(cid) {
 async function boot() {
   setLoaderStatus('Connecting to Firebase…');
   
-  // Failsafe: Force hide loader after 8 seconds regardless of what happens
   const failsafeTimer = setTimeout(() => {
     if (document.getElementById('loader')?.style.display !== 'none') {
       console.warn('[main.js] Failsafe triggered: forcing loader to hide.');
@@ -574,6 +582,9 @@ async function boot() {
       onValue(rootRef,
         s => {
           if (initialLoadTimer) clearTimeout(initialLoadTimer);
+          
+          hideLoader();
+          
           try {
             applyData(s.val() || {});
             setStatus();
@@ -582,8 +593,6 @@ async function boot() {
           }
           if (!done) {
             done = true;
-            setLoaderStatus('Loaded.');
-            setTimeout(hideLoader, 100);
             resolve();
           }
         },
