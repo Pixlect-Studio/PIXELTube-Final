@@ -116,12 +116,10 @@ const ADMIN_UIDS      = [
 function isAdmin() {
   if (!PIXLECT.user) return false;
   
-  // 1. Check hardcoded lists (Super Admins)
   if (ADMIN_USERNAMES.includes(PIXLECT.user.username) || ADMIN_UIDS.includes(PIXLECT.user.uid)) {
     return true;
   }
   
-  // 2. Check the live database for added admins
   if (state.admins && state.admins[PIXLECT.user.uid]) {
     return true;
   }
@@ -215,7 +213,7 @@ const state = {
   videos: {}, channels: {}, playlists: {}, subs: {}, likes: {}, dislikes: {},
   subscriberCounts: {},
   users: {}, reports: {}, comments: {}, audit: {},
-  admins: {}, // <--- Added for live admins
+  admins: {},
   search: '', route: ['home'],
   viewedThisSession: new Set(),
   myChannelIds: [],
@@ -533,6 +531,15 @@ async function deleteChannel(cid) {
    ============================================================ */
 async function boot() {
   setLoaderStatus('Connecting to Firebase…');
+  
+  // Failsafe: Force hide loader after 8 seconds regardless of what happens
+  const failsafeTimer = setTimeout(() => {
+    if (document.getElementById('loader')?.style.display !== 'none') {
+      console.warn('[main.js] Failsafe triggered: forcing loader to hide.');
+      hideLoader();
+    }
+  }, 8000);
+
   try {
     const app = initializeApp(FIREBASE_PRIMARY, 'primary');
     db = getDatabase(app);
@@ -567,8 +574,12 @@ async function boot() {
       onValue(rootRef,
         s => {
           if (initialLoadTimer) clearTimeout(initialLoadTimer);
-          applyData(s.val() || {});
-          setStatus();
+          try {
+            applyData(s.val() || {});
+            setStatus();
+          } catch (err) {
+            console.error('[main.js] Error applying data:', err);
+          }
           if (!done) {
             done = true;
             setLoaderStatus('Loaded.');
@@ -599,11 +610,14 @@ async function boot() {
     });
 
     setStatus();
+    clearTimeout(failsafeTimer);
+    
     if (PIXLECT.user) {
       await migrateUserChannels();
       await ensurePrimaryChannel();
     }
   } catch (e) {
+    clearTimeout(failsafeTimer);
     console.warn('[main.js] Firebase unavailable → local mode.', e);
     setLoaderStatus('Offline mode.');
     bootLocal();
@@ -631,7 +645,7 @@ function applyData(d) {
   lastData = d;
   state.videos    = d.videos    || {};
   state.channels  = d.channels  || {};
-  state.admins    = d.admins    || {}; // <--- Added admins
+  state.admins    = d.admins    || {};
   seedSubscriberCounts(state.channels);
   offlineDownloads().forEach(item => {
     if (!item.video?.id) return;
@@ -660,8 +674,12 @@ function applyData(d) {
   else if (p && ids.includes(p)) state.activeChannelId = p;
   else state.activeChannelId = ids[0] || null;
 
-  renderSidebar();
-  render();
+  try {
+    renderSidebar();
+    render();
+  } catch (err) {
+    console.warn('[main.js] Render error during applyData:', err);
+  }
 }
 
 function updateJoinedUserCount() {
