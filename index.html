@@ -22,46 +22,21 @@ if ('serviceWorker' in navigator && window.isSecureContext) {
 </script>
 <link rel="icon" type="image/png" href="./logo.png" />
 <!-- Bumped CSS version to force cache refresh -->
-<link rel="stylesheet" href="./styles/styles.css?v=100" />
+<link rel="stylesheet" href="./styles/styles.css?v=101" />
 <style>
-  /* Inline styles for the PIXLECT Auth integration */
   #pixlect-login {
     background: linear-gradient(135deg, var(--accent), #5b8cff);
-    color: #fff;
-    border: none;
-    padding: 8px 16px;
-    border-radius: 999px;
-    font-size: 13px;
-    font-weight: 700;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    transition: transform 0.15s, filter 0.15s;
-    box-shadow: 0 4px 12px rgba(124, 92, 255, 0.3);
-    font-family: inherit;
-    margin-left: 12px;
+    color: #fff; border: none; padding: 8px 16px; border-radius: 999px;
+    font-size: 13px; font-weight: 700; cursor: pointer; display: flex;
+    align-items: center; gap: 8px; transition: transform 0.15s, filter 0.15s;
+    box-shadow: 0 4px 12px rgba(124, 92, 255, 0.3); font-family: inherit; margin-left: 12px;
   }
-  #pixlect-login:hover {
-    filter: brightness(1.1);
-    transform: translateY(-1px);
-  }
-  #pixlect-login:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-    filter: none;
-    transform: none;
-    box-shadow: none;
-  }
+  #pixlect-login:hover { filter: brightness(1.1); transform: translateY(-1px); }
+  #pixlect-login:disabled { opacity: 0.5; cursor: not-allowed; filter: none; transform: none; box-shadow: none; }
   .pixlect-user-badge {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    background: var(--panel-2, #141d33);
-    border: 1px solid var(--line, #22304f);
-    padding: 4px 6px 4px 4px;
-    border-radius: 999px;
-    margin-left: 12px;
+    display: flex; align-items: center; gap: 12px;
+    background: var(--panel-2, #141d33); border: 1px solid var(--line, #22304f);
+    padding: 4px 6px 4px 4px; border-radius: 999px; margin-left: 12px;
   }
 </style>
 </head>
@@ -94,7 +69,6 @@ if ('serviceWorker' in navigator && window.isSecureContext) {
   </button>
   <span class="status-pill" id="statusPill">connecting</span>
 
-  <!-- Auth Slot -->
   <div id="authSlot">
     <button id="pixlect-login">
       <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
@@ -127,37 +101,24 @@ if ('serviceWorker' in navigator && window.isSecureContext) {
 (() => {
   const button = document.querySelector('[data-theme-toggle]');
   if (!button) return;
-
   const updateThemeButton = () => {
     const nextTheme = document.documentElement.dataset.theme === 'light' ? 'dark' : 'light';
-    const label = `Switch to ${nextTheme} mode`;
-    button.setAttribute('aria-label', label);
-    button.title = label;
+    button.setAttribute('aria-label', `Switch to ${nextTheme} mode`);
+    button.title = `Switch to ${nextTheme} mode`;
   };
-
   button.addEventListener('click', () => {
     const theme = document.documentElement.dataset.theme === 'light' ? 'dark' : 'light';
     document.documentElement.dataset.theme = theme;
     updateThemeButton();
-    try {
-      localStorage.setItem('pixeltube-theme', theme);
-    } catch (error) {
-      console.warn('[PIXELTube] could not save theme preference:', error);
-    }
+    try { localStorage.setItem('pixeltube-theme', theme); } catch (e) {}
   });
   updateThemeButton();
 })();
 </script>
 
-<!-- External Libraries -->
 <script src="https://cdn.jsdelivr.net/npm/tus-js-client@4.1.0/dist/tus.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.17/dist/hls.min.js"></script>
-
-<!-- PIXELTube Core App Logic (Bumped to v=100 to force cache clear) -->
-<script type="module" src="./js/main.js?v=100"></script>
-
-<!-- PIXLECT Authentication Engine (Bumped to v=100) -->
-<script src="./js/login.js?v=100" defer></script>
-
+<script type="module" src="./js/main.js?v=101"></script>
+<script src="./js/login.js?v=101" defer></script>
 </body>
 </html>
