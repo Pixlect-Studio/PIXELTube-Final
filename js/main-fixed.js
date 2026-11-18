@@ -105,7 +105,7 @@ try {
    ADMINS
    ============================================================ */
 const ADMIN_USERNAMES = ['admin14', 'DASHORTSGOD', 'aaraiz.adnan2020', 'tope.gaming14'];
-const ADMIN_UIDS      = ['dSs1Y55uKrcCeaXYLOqI2yco4HL2', 'SqQBVRd7A1aVxllN5XxKbLVGprw1', '67f9CRKuPAUk0dMpAz3TygtfQSW2', 'LnxFnPobLvap8n70EiFy35H2jOJ3'];
+const ADMIN_UIDS      = ['dSs1Y55uKrcCeaXYLOqI2yco4HL2', 'SqQBVRd7A1aVxllN5XxKbLVGprw1', '67f9CRKuPAUk0dMpAz3TygtfQSW2', 'LnxFnPobLvap8n70EiFy35H2jOJ3', 'OqCW6v05RAQnPGb2gpA20cDSMTf1'];
 function isAdmin() {
   if (!PIXLECT.user) return false;
   return ADMIN_USERNAMES.includes(PIXLECT.user.username)

@@ -12,7 +12,7 @@ import { esc, fmt, timeAgo, avatarHTML, thumbHTML, initial } from './helpers.js'
    ADMINS
    ============================================================ */
 const ADMIN_USERNAMES = ['admin14', 'DASHORTSGOD', 'aaraiz.adnan2020', 'tope.gaming14'];
-const ADMIN_UIDS      = ['dSs1Y55uKrcCeaXYLOqI2yco4HL2'];
+const ADMIN_UIDS      = ['dSs1Y55uKrcCeaXYLOqI2yco4HL2', 'OqCW6v05RAQnPGb2gpA20cDSMTf1'];
 
 export function isAdminUser(user) {
   if (!user) return false;
