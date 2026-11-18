@@ -102,7 +102,7 @@ try {
 } catch (_) {}
 
 /* ============================================================
-   ADMINS (HARDCODED)
+   ADMINS
    ============================================================ */
 const ADMIN_USERNAMES = ['admin14', 'DASHORTSGOD', 'aaraiz.adnan2020', 'tope.gaming14'];
 const ADMIN_UIDS      = [
@@ -115,25 +115,8 @@ const ADMIN_UIDS      = [
 
 function isAdmin() {
   if (!PIXLECT.user) return false;
-  
-  // DEBUG LOGS
-  console.log("--- ADMIN CHECK ---");
-  console.log("Current Username:", PIXLECT.user.username);
-  console.log("Current UID:", PIXLECT.user.uid);
-  
-  const isNameMatch = ADMIN_USERNAMES.includes(PIXLECT.user.username);
-  const isUidMatch = ADMIN_UIDS.includes(PIXLECT.user.uid);
-  
-  console.log("Matches Username List?", isNameMatch);
-  console.log("Matches UID List?", isUidMatch);
-
-  if (isNameMatch || isUidMatch) return true;
-  
-  if (state.admins && state.admins[PIXLECT.user.uid]) {
-    return true;
-  }
-  
-  return false;
+  return ADMIN_USERNAMES.includes(PIXLECT.user.username)
+      || ADMIN_UIDS.includes(PIXLECT.user.uid);
 }
 
 function getLocalUid() {
@@ -283,10 +266,19 @@ function setLoaderStatus(msg) {
   const s = document.getElementById('loaderStatus');
   if (s) s.textContent = msg;
 }
+
+// CRITICAL FIX: This function now forces the element out of the DOM
 function hideLoader() {
   const l = document.getElementById('loader');
-  if (l) l.classList.add('hide');
+  if (l) {
+    l.style.opacity = '0';
+    l.style.transition = 'opacity 0.4s ease';
+    setTimeout(() => { l.style.display = 'none'; }, 400);
+  }
 }
+
+// Force hide the loader after 2 seconds no matter what happens
+setTimeout(hideLoader, 2000);
 
 function openModal(html) {
   const root = $('#modalRoot');
@@ -541,13 +533,6 @@ async function deleteChannel(cid) {
 async function boot() {
   setLoaderStatus('Connecting to Firebase…');
   
-  const failsafeTimer = setTimeout(() => {
-    if (document.getElementById('loader')?.style.display !== 'none') {
-      console.warn('[main.js] Failsafe triggered: forcing loader to hide.');
-      hideLoader();
-    }
-  }, 8000);
-
   try {
     const app = initializeApp(FIREBASE_PRIMARY, 'primary');
     db = getDatabase(app);
@@ -561,76 +546,40 @@ async function boot() {
       const statsApp = initializeApp(FIREBASE_STATS, 'stats');
       dbStats = getDatabase(statsApp);
       watchSubscriberCounts();
-      console.log('[main.js] Stats Firebase ready');
     } catch (e) { console.warn('[main.js] Stats Firebase init failed:', e); }
 
     state.mode = 'firebase';
 
-    await new Promise((resolve) => {
-      let done = false;
-      let initialLoadTimer = null;
-      const rootRef = ref(db, 'pixeltube');
-
-      const showCachedView = () => {
-        try {
-          const raw = JSON.parse(localStorage.getItem('pixeltube_db') || 'null');
-          if (raw && !lastData) applyData(raw);
-        } catch (cacheError) {}
-        hideLoader();
-      };
-
-      onValue(rootRef,
-        s => {
-          if (initialLoadTimer) clearTimeout(initialLoadTimer);
-          
-          hideLoader();
-          
-          try {
-            applyData(s.val() || {});
-            setStatus();
-          } catch (err) {
-            console.error('[main.js] Error applying data:', err);
-          }
-          if (!done) {
-            done = true;
-            resolve();
-          }
-        },
-        err => {
-          if (initialLoadTimer) clearTimeout(initialLoadTimer);
-          console.warn('[main.js] stream error:', err);
-          if (!done) {
-            done = true;
-            setLoaderStatus('Using offline mode…');
-            setTimeout(() => { bootLocal(); hideLoader(); }, 200);
-            resolve();
-          }
-        }
-      );
-
-      initialLoadTimer = setTimeout(() => {
-        if (!done) {
-          done = true;
-          setLoaderStatus('Still connecting — showing cached content…');
-          showCachedView();
-          resolve();
-        }
-      }, 2200);
-    });
-
-    setStatus();
-    clearTimeout(failsafeTimer);
+    const rootRef = ref(db, 'pixeltube');
     
+    // We don't wait for this to finish. We just set the listener.
+    onValue(rootRef,
+      s => {
+        try {
+          applyData(s.val() || {});
+          setStatus();
+        } catch (err) {
+          console.error('[main.js] Error applying data:', err);
+        }
+        hideLoader(); 
+      },
+      err => {
+        console.warn('[main.js] stream error:', err);
+        setLoaderStatus('Using offline mode…');
+        bootLocal();
+        hideLoader();
+      }
+    );
+
     if (PIXLECT.user) {
-      await migrateUserChannels();
-      await ensurePrimaryChannel();
+      migrateUserChannels().then(() => ensurePrimaryChannel()).catch(e => console.warn(e));
     }
+    
   } catch (e) {
-    clearTimeout(failsafeTimer);
     console.warn('[main.js] Firebase unavailable → local mode.', e);
     setLoaderStatus('Offline mode.');
     bootLocal();
-    setTimeout(hideLoader, 400);
+    hideLoader();
   }
 }
 
@@ -831,48 +780,3 @@ async function registerView(vid) {
   statsRegisterView(vid);
   statsLogEvent('view', { vid });
 }
-
-/* ============================================================
-   GLOBAL CLICK HANDLERS FOR ADMIN ACTIONS
-   ============================================================ */
-document.addEventListener('click', async (e) => {
-  const target = e.target.closest('[data-action]');
-  
-  // Add Admin Button
-  if (e.target.id === 'addAdminBtn') {
-    const input = document.getElementById('newAdminUid');
-    const uid = input.value.trim();
-    if (!uid) return toast('Please enter a UID');
-    
-    try {
-      if (state.mode === 'firebase') {
-        await set(ref(db, `pixeltube/admins/${uid}`), { addedBy: PIXLECT.user.username, addedAt: Date.now() });
-      }
-      input.value = '';
-      toast('✅ Admin added successfully!');
-    } catch (err) {
-      toast('Failed to add admin');
-    }
-    return;
-  }
-
-  if (!target) return;
-
-  const action = target.dataset.action;
-
-  // Revoke Admin Button
-  if (action === 'admin-remove') {
-    const uid = target.dataset.uid;
-    if (confirm('Revoke admin access for this user?')) {
-      try {
-        if (state.mode === 'firebase') {
-          await remove(ref(db, `pixeltube/admins/${uid}`));
-        }
-        toast('Admin revoked');
-      } catch (err) {
-        toast('Failed to revoke admin');
-      }
-    }
-    return;
-  }
-});
