@@ -1,4 +1,4 @@
-const CACHE_NAME = 'pixeltube-app-js-v13';
+const CACHE_NAME = 'pixeltube-app-js-v14';
 const APP_SCRIPTS = [
   './js/main.js?v=32',
   './js/helpers.js',
@@ -9,7 +9,8 @@ const APP_SCRIPTS = [
   './js/studio.js',
   './js/legal.js',
   './js/offline.js',
-  './js/login.js?v=32'
+  './js/login.js?v=32',
+  './js/settings.js?v=101'
 ];
 
 self.addEventListener('install', event => {

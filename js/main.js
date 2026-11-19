@@ -109,10 +109,15 @@ try {
    ============================================================ */
 const ADMIN_USERNAMES = ['admin14', 'DASHORTSGOD', 'aaraiz.adnan2020', 'tope.gaming14'];
 const ADMIN_UIDS      = ['dSs1Y55uKrcCeaXYLOqI2yco4HL2', 'SqQBVRd7A1aVxllN5XxKbLVGprw1', '67f9CRKuPAUk0dMpAz3TygtfQSW2', 'LnxFnPobLvap8n70EiFy35H2jOJ3', 'OqCW6v05RAQnPGb2gpA20cDSMTf1'];
+const HARDCODED_ADMIN_UIDS = new Set(ADMIN_UIDS);
+
 function isAdmin() {
   if (!PIXLECT.user) return false;
-  return ADMIN_USERNAMES.includes(PIXLECT.user.username)
-      || ADMIN_UIDS.includes(PIXLECT.user.uid);
+  if (ADMIN_USERNAMES.includes(PIXLECT.user.username)
+      || ADMIN_UIDS.includes(PIXLECT.user.uid)) return true;
+  // Database-promoted admins (pixeltube/admins/<uid> = { username, addedBy, addedAt })
+  const uid = PIXLECT.user.uid;
+  return !!(state.admins && (state.admins[uid] || state.admins['pl_' + uid]));
 }
 
 function getLocalUid() {
@@ -200,7 +205,7 @@ const state = {
   mode: 'connecting',
   videos: {}, channels: {}, playlists: {}, subs: {}, likes: {}, dislikes: {},
   subscriberCounts: {},
-  users: {}, reports: {}, comments: {}, audit: {},
+  users: {}, reports: {}, comments: {}, audit: {}, admins: {},
   search: '', route: ['home'],
   viewedThisSession: new Set(),
   myChannelIds: [],
@@ -629,6 +634,7 @@ function applyData(d) {
   state.users     = d.users     || {};
   state.reports   = d.reports   || {};
   state.audit     = d.moderationAudit || d.audit || {};
+  state.admins    = d.admins     || state.admins || {};
   state.comments  = d.comments  || {};
   const u = (d.users && d.users[state.uid]) || {};
   state.subs     = u.subs     || {};
@@ -1086,6 +1092,7 @@ function playlistVideos(pid) {
    ============================================================ */
 const CTX = {
   state, PIXLECT, isAdmin,
+  HARDCODED_ADMIN_UIDS,
   get db() { return db; },
   get dbBackup() { return dbBackup; },
   get dbStats() { return dbStats; },
@@ -2170,6 +2177,50 @@ document.addEventListener('click', async (e) => {
     if(ownedVideos.length){toast(`Delete or reassign the ${ownedVideos.length} video(s) first. Channel deletion will not cascade-delete content.`);return;}
     if(!confirm(`Permanently delete channel “${ch.name||cid}”? This cannot be undone.`))return;
     (async()=>{try{if(state.mode==='local'&&localDB){delete localDB.channels[cid];persistLocal();applyData(localDB);}else{await remove(ref(db,`pixeltube/channels/${cid}`));if(ch.ownerUid)await remove(ref(db,`pixeltube/users/pl_${ch.ownerUid}/channels/${cid}`));}toast('Channel deleted');location.hash='#/admin/users';render(true);}catch(err){toast('Could not delete channel: '+(err?.message||'database error'));}})();return;
+  }
+  if (action === 'admin-add') {
+    e.preventDefault(); if (!isAdmin()) { toast('Admin only'); return; }
+    const box = document.getElementById('newAdminUid');
+    const raw = String(box?.value || '').trim();
+    if (!raw) { toast('Paste a PIXLECT UID first'); return; }
+    const uid = raw.replace(/^pl_/, '');
+    if (state.admins && (state.admins[uid] || state.admins['pl_' + uid])) { toast('That user is already an admin'); return; }
+    (async () => {
+      try {
+        const entry = { username: '', addedBy: PIXLECT.user?.username || 'admin', addedAt: Date.now() };
+        if (state.mode === 'local' && localDB) {
+          localDB.admins = localDB.admins || {}; localDB.admins[uid] = entry; persistLocal(); applyData(localDB);
+        } else {
+          if (!db) throw new Error('Firebase is not connected');
+          await set(ref(db, `pixeltube/admins/${uid}`), entry);
+          state.admins[uid] = entry;
+        }
+        try { const { writeModerationAudit } = await import('./sec.js?v=32'); await writeModerationAudit(CTX, 'admin-promoted', 'user', uid); } catch (_) {}
+        toast('Admin added'); render(true);
+      } catch (err) { toast('Could not add admin: ' + (err?.message || 'database error')); }
+    })();
+    return;
+  }
+  if (action === 'admin-revoke') {
+    e.preventDefault(); if (!isAdmin()) { toast('Admin only'); return; }
+    const uid = el.dataset.uid;
+    if (HARDCODED_ADMIN_UIDS.has(String(uid).replace(/^pl_/, ''))) { toast('Hardcoded super admins cannot be revoked'); return; }
+    if (!confirm(`Revoke admin access for ${uid}?`)) return;
+    (async () => {
+      try {
+        if (state.mode === 'local' && localDB) {
+          if (localDB.admins) { delete localDB.admins[uid]; delete localDB.admins['pl_' + uid]; } persistLocal(); applyData(localDB);
+        } else {
+          if (!db) throw new Error('Firebase is not connected');
+          await remove(ref(db, `pixeltube/admins/${uid}`));
+          await remove(ref(db, `pixeltube/admins/pl_${uid}`));
+          delete state.admins[uid]; delete state.admins['pl_' + uid];
+        }
+        try { const { writeModerationAudit } = await import('./sec.js?v=32'); await writeModerationAudit(CTX, 'admin-revoked', 'user', uid); } catch (_) {}
+        toast('Admin revoked'); render(true);
+      } catch (err) { toast('Could not revoke admin: ' + (err?.message || 'database error')); }
+    })();
+    return;
   }
   if (action === 'admin-bulk-flag') {
     e.preventDefault(); const ids=[...document.querySelectorAll('[data-admin-video-select]:checked')].map(x=>x.value); if(!ids.length){toast('Select at least one video');return;}

@@ -411,6 +411,7 @@ export function viewAdmin(ctx, sub, detail = '') {
     case 'video': return viewAdminVideo(ctx, detail);
     case 'qvids': return viewAdminQvids(ctx);
     case 'suspended': return viewAdminSuspended(ctx);
+    case 'admins':    return viewAdminAdmins(ctx);
     case 'videos':    return viewAdminVideos(ctx);
     case 'users':     return viewAdminUsers(ctx);
     case 'search':    return viewAdminSearch(ctx);
@@ -436,6 +437,7 @@ function adminWrap(ctx, active, contentHTML) {
     { id: 'review',    label: 'Review queue', href: '#/admin/review', count: reviewCount },
     { id: 'qvids',     label: 'QVids', href: '#/admin/qvids', count: reviewCount },
     { id: 'appeals',   label: 'Appeals', href: '#/admin/appeals', count: appealCount },
+    { id: 'admins',    label: 'Admins',  href: '#/admin/admins' },
     { id: 'audit',     label: 'Audit log', href: '#/admin/audit' }
   ];
 
@@ -745,6 +747,52 @@ function viewAdminSearch(ctx) {
 
 function viewAdminUsers(ctx) {
   return adminWrap(ctx, 'search', `<div class="admin-head"><h1>Channel Admin</h1><p>Channel directories are not shown by default. Search for the exact channel, then open its private admin panel.</p><a class="btn-primary" href="#/admin/search">Search channels →</a></div>`);
+}
+
+/* ============================================================
+   TAB: ADMINS — promote/revoke database admins
+   ============================================================ */
+function viewAdminAdmins(ctx) {
+  const { PIXLECT, state } = ctx;
+  const dbAdmins = Object.entries(state.admins || {})
+    .map(([uid, data]) => ({ uid, ...(data || {}) }))
+    .sort((a, b) => (b.addedAt || 0) - (a.addedAt || 0));
+
+  const rows = dbAdmins.length ? dbAdmins.map(a => {
+    const cid = String(a.uid).startsWith('pl_') ? a.uid : ('pl_' + a.uid);
+    const ch = state.channels?.[cid];
+    const name = ch?.name || a.username || 'Unknown admin';
+    const isHardcoded = ctx.HARDCODED_ADMIN_UIDS?.has?.(String(a.uid).replace(/^pl_/, '')) || false;
+    return `
+      <div class="admin-row">
+        <div class="admin-info">
+          <div class="admin-title">${esc(name)} <span class="admin-search-kind">ADMIN</span>${isHardcoded ? ' <span class="admin-search-kind" style="color:var(--warn)">SUPER</span>' : ''}</div>
+          <div class="admin-meta">UID: <code>${esc(a.uid)}</code>${a.addedBy ? ` · added by <b>${esc(a.addedBy)}</b> ${a.addedAt ? esc(timeAgo(a.addedAt)) : ''}` : ''}</div>
+        </div>
+        <div class="admin-actions">
+          ${ch ? `<a class="btn-secondary" href="#/channel/${esc(ch.id)}" target="_blank" rel="noopener">View channel</a>` : ''}
+          ${!isHardcoded ? `<button class="btn-secondary" data-action="admin-revoke" data-uid="${esc(a.uid)}" type="button" style="color:var(--accent)">Revoke</button>` : ''}
+        </div>
+      </div>`;
+  }).join('') : '<div class="admin-empty">No database admins promoted yet. Hardcoded super admins always have access.</div>';
+
+  return adminWrap(ctx, 'admins', `
+    <div class="admin-head">
+      <h1>Admins</h1>
+      <p>Users with full moderation access. Hardcoded super admins cannot be revoked.</p>
+    </div>
+    <section class="admin-section">
+      <h2>Add admin</h2>
+      <div class="admin-add-admin">
+        <input type="text" id="newAdminUid" placeholder="PIXLECT UID (e.g. dSs1Y55uKrcCeaXYLOqI2yco4HL2) or pl_…" maxlength="80" autocomplete="off">
+        <button class="btn-primary" data-action="admin-add" type="button">Add admin</button>
+      </div>
+      <div class="admin-meta" style="margin-top:8px">Paste the user's PIXLECT UID. It is saved to <code>pixeltube/admins/&lt;uid&gt;</code> and grants full moderation access immediately.</div>
+    </section>
+    <section class="admin-section">
+      <h2>Database admins <span class="admin-count">${dbAdmins.length}</span></h2>
+      ${rows}
+    </section>`);
 }
 
 
