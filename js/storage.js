@@ -20,10 +20,9 @@
    ============================================================ */
 import { loadEnv, getEnv } from './env.js';
 
-export const MAX_LONG_UPLOAD_BYTES  = 100 * 1024 * 1024;
-export const MAX_MINI_UPLOAD_BYTES  = 100 * 1024 * 1024;
-export const FALLBACK_MAX_BYTES     = 100 * 1024 * 1024;
-
+export const MAX_LONG_UPLOAD_BYTES  = 200 * 1024 * 1024;   // 200 MiB
+export const MAX_MINI_UPLOAD_BYTES  = 200 * 1024 * 1024;   // 200 MiB
+export const FALLBACK_MAX_BYTES     = 200 * 1024 * 1024;   // 200 MiB
 let BUNNY_LIBRARY_ID = '';
 let BUNNY_API_KEY    = '';
 let BUNNY_CDN_HOST   = '';
