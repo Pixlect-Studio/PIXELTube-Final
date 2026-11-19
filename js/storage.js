@@ -20,9 +20,16 @@
    ============================================================ */
 import { loadEnv, getEnv } from './env.js';
 
-export const MAX_LONG_UPLOAD_BYTES  = 200 * 1024 * 1024;   // 200 MiB
-export const MAX_MINI_UPLOAD_BYTES  = 200 * 1024 * 1024;   // 200 MiB
-export const FALLBACK_MAX_BYTES     = 200 * 1024 * 1024;   // 200 MiB
+export const BASE_UPLOAD_BYTES      = 200 * 1024 * 1024;   // 200 MiB — standard accounts
+export const VERIFIED_UPLOAD_BYTES  = 500 * 1024 * 1024;   // 500 MiB — verified channels
+export const MAX_LONG_UPLOAD_BYTES  = BASE_UPLOAD_BYTES;   // kept for older imports
+export const MAX_MINI_UPLOAD_BYTES  = BASE_UPLOAD_BYTES;
+export const FALLBACK_MAX_BYTES     = VERIFIED_UPLOAD_BYTES; // base64 fallback ceiling follows the top tier
+
+// Returns the byte limit for a channel. Verified channels get 500 MB.
+export function uploadLimitBytes(channel) {
+  return (channel && channel.verified) ? VERIFIED_UPLOAD_BYTES : BASE_UPLOAD_BYTES;
+}
 let BUNNY_LIBRARY_ID = '';
 let BUNNY_API_KEY    = '';
 let BUNNY_CDN_HOST   = '';
@@ -58,7 +65,7 @@ loadEnv().then(() => {
     console.error('[storage] BUNNY_LIBRARY_ID is missing. Bunny playback and uploads are unavailable; Firebase fallback will be used.');
   }
   if (!key || !cdn) {
-    console.warn('[storage] Bunny key/CDN not configured. Uploads >100 MB and Bunny CDN playback are unavailable in this build.');
+    console.warn('[storage] Bunny key/CDN not configured. Uploads over the 200 MB (500 MB verified) tier and Bunny CDN playback may be unavailable in this build.');
   }
 }).catch((err) => {
   console.warn('[storage] env load failed:', err?.message || err);
@@ -237,9 +244,12 @@ export async function uploadVideo(ctx, file, vid, kind, onProgress) {
   const uid = ctx.PIXLECT?.user?.uid;
   if (!uid) throw new Error('Not signed in');
 
-  const maxBytes = kind === 'mini' ? MAX_MINI_UPLOAD_BYTES : MAX_LONG_UPLOAD_BYTES;
+  const cid = ctx.state?.activeChannelId;
+  const channel = (ctx.state?.channels?.[cid]) || Object.values(ctx.state?.channels || {})
+    .find(c => c && c.ownerUid === uid);
+  const maxBytes = uploadLimitBytes(channel);
   if (file.size > maxBytes) {
-    throw new Error(`${kind === 'mini' ? 'Mini' : 'Long'} uploads are limited to 100 MB.`);
+    throw new Error(`${kind === 'mini' ? 'Mini' : 'Long'} uploads are limited to ${Math.round(maxBytes / 1024 / 1024)} MB for ${channel?.verified ? 'verified' : 'non-verified'} channels.`);
   }
 
   await ensureEnv();
