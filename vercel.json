@@ -3,6 +3,8 @@
   "rewrites": [
     { "source": "/(.*)\\.env", "destination": "/api/env-blocked" },
     { "source": "/backend/:path*", "destination": "/api/env-blocked" },
-    { "source": "/domain.json", "destination": "/api/[[...route]]" }
+    { "source": "/domain.json", "destination": "/api/[[...route]]" },
+    { "source": "/api", "destination": "/api/[[...route]]" },
+    { "source": "/api/:path*", "destination": "/api/[[...route]]" }
   ]
 }

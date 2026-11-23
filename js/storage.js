@@ -64,9 +64,13 @@ loadEnv().then(() => {
   if (!library) {
     console.error('[storage] BUNNY_LIBRARY_ID is missing. Bunny playback and uploads are unavailable; Firebase fallback will be used.');
   }
-  if (!key || !cdn) {
-    console.warn('[storage] Bunny key/CDN not configured. Uploads over the 200 MB (500 MB verified) tier and Bunny CDN playback may be unavailable in this build.');
+  if (key) {
+    console.warn('[storage] BUNNY_STREAM_API_KEY found in the browser — remove it from data.env / env vars; the backend should hold it.');
   }
+  if (!cdn) {
+    console.warn('[storage] BUNNY_CDN_HOST missing — Bunny CDN playback unavailable in this build.');
+  }
+  console.info('[storage] Bunny API key is held server-side; uploads are pre-signed by the backend (/api/uploads/init).');
 }).catch((err) => {
   console.warn('[storage] env load failed:', err?.message || err);
 });
