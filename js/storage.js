@@ -18,7 +18,7 @@
      deleteVideoSource(ctx, vid)
      capabilities                    ← static capability snapshot
    ============================================================ */
-import { loadEnv, getEnv } from './env.js';
+import { loadEnv, getEnv, apiBase } from './env.js';
 
 export const BASE_UPLOAD_BYTES      = 200 * 1024 * 1024;   // 200 MiB — standard accounts
 export const VERIFIED_UPLOAD_BYTES  = 500 * 1024 * 1024;   // 500 MiB — verified channels
@@ -122,7 +122,7 @@ async function bunnyCreateVideo(title) {
    The backend creates the Bunny video and signs the tus payload with
    the API key held in backend/data.env. The browser never sees it. */
 async function backendInitUpload(title) {
-  const res = await fetch('/api/uploads/init', {
+  const res = await fetch(apiBase() + '/api/uploads/init', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ title })
@@ -142,7 +142,7 @@ let backendProbe = null;
 async function hasUploadBackend() {
   if (backendProbe !== null) return backendProbe;
   try {
-    const res = await fetch('/api/uploads/health', { cache: 'no-store' });
+    const res = await fetch(apiBase() + '/api/uploads/health', { cache: 'no-store' });
     backendProbe = !!res.ok;
   } catch (_) {
     backendProbe = false;

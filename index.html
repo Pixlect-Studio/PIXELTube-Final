@@ -16,6 +16,11 @@ try {
   console.warn('[PIXELTube] could not read saved theme:', error);
 }
 </script>
+<!-- Backend API base. Empty = same origin (backend serves this site).
+     If this frontend is hosted separately (GitHub Pages / Hostinger),
+     set it to the backend URL, e.g.:
+     window.PIXELTUBE_API_BASE = 'https://pixel-tube-final-backend.vercel.app'; -->
+<script>window.PIXELTUBE_API_BASE = '';</script>
 <script>
 if ('serviceWorker' in navigator && window.isSecureContext) {
   navigator.serviceWorker.register('./service-worker.js')

@@ -16,6 +16,20 @@
 const BACKEND_CONFIG = '/api/config';
 const ENV_PATH = './data.env';
 
+/**
+ * Backend API base URL. Empty = same origin (backend serves the frontend).
+ * When the frontend is hosted separately (GitHub Pages / Hostinger),
+ * index.html sets window.PIXELTUBE_API_BASE to the backend URL,
+ * e.g. https://pixel-tube-final-backend.vercel.app
+ */
+export function apiBase() {
+  try {
+    return String(window.PIXELTUBE_API_BASE || '').replace(/\/+$/, '');
+  } catch (_) {
+    return '';
+  }
+}
+
 let envCache = null;
 let envPromise = null;
 
@@ -30,7 +44,7 @@ export function loadEnv() {
   envPromise = (async () => {
   // 1) Preferred: backend /api/config (public values only — no secrets).
   try {
-    const res = await fetch(BACKEND_CONFIG, { cache: 'no-store' });
+    const res = await fetch(apiBase() + BACKEND_CONFIG, { cache: 'no-store' });
     if (res.ok) {
       const cfg = await res.json();
       const env = {
