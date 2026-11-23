@@ -6,10 +6,10 @@
      Minis → Bunny Stream (primary) → Firebase base64 (fallback)
      Longs → Bunny Stream (primary) → Firebase base64 (fallback)
 
-   V2.1 note: the Bunny API key is intentionally not shipped in .env.
-   The console will read key=— cdn=— until you wire a backend. Uploads
-   up to FALLBACK_MAX_BYTES fall through to Firebase base64. Bigger
-   files require a server-side Bunny upload endpoint.
+   V2.1 note (resolved): the Bunny API key now lives only in
+   backend/data.env. The frontend asks POST /api/uploads/init for a
+   pre-signed tus payload — the key never reaches the browser. A
+   locally configured key (./data.env) is still honoured as fallback.
 
    Public API:
      uploadVideo(ctx, file, vid, kind, onProgress)
@@ -115,11 +115,55 @@ async function bunnyCreateVideo(title) {
   const signatureInput = `${BUNNY_LIBRARY_ID}${BUNNY_API_KEY}${expirationTime}${videoId}`;
   const signature = await sha256Hex(signatureInput);
 
-  return { videoId, signature, expirationTime };
+  return { videoId, signature, expirationTime, libraryId: BUNNY_LIBRARY_ID };
+}
+
+/* Backend upload init — dual-end path.
+   The backend creates the Bunny video and signs the tus payload with
+   the API key held in backend/data.env. The browser never sees it. */
+async function backendInitUpload(title) {
+  const res = await fetch('/api/uploads/init', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ title })
+  });
+  if (!res.ok) {
+    const txt = await res.text().catch(() => '');
+    throw new Error(`Backend upload init failed (${res.status}): ${txt.slice(0, 200)}`);
+  }
+  const data = await res.json();
+  if (!data.videoId || !data.signature) {
+    throw new Error('Backend upload init returned incomplete payload');
+  }
+  return data;
+}
+
+let backendProbe = null;
+async function hasUploadBackend() {
+  if (backendProbe !== null) return backendProbe;
+  try {
+    const res = await fetch('/api/uploads/health', { cache: 'no-store' });
+    backendProbe = !!res.ok;
+  } catch (_) {
+    backendProbe = false;
+  }
+  return backendProbe;
 }
 
 async function bunnyUpload(file, title, onProgress) {
-  const { videoId, signature, expirationTime } = await bunnyCreateVideo(title);
+  // Prefer the backend (key stays server-side); fall back to a locally
+  // configured key only when no backend is reachable.
+  let init = null;
+  try {
+    init = await backendInitUpload(title);
+  } catch (backendErr) {
+    if (!(BUNNY_LIBRARY_ID && BUNNY_API_KEY)) throw backendErr;
+    console.warn('[storage] backend init unavailable, using legacy local key:', backendErr?.message);
+    init = await bunnyCreateVideo(title);
+  }
+
+  const { videoId, signature, expirationTime } = init;
+  const libraryId = init.libraryId || BUNNY_LIBRARY_ID;
 
   return new Promise((resolve, reject) => {
     if (typeof tus === 'undefined' || !tus.Upload) {
@@ -128,13 +172,13 @@ async function bunnyUpload(file, title, onProgress) {
     }
 
     const upload = new tus.Upload(file, {
-      endpoint: TUS_ENDPOINT,
+      endpoint: init.tusEndpoint || TUS_ENDPOINT,
       retryDelays: [0, 3000, 5000, 10000, 20000, 60000],
       headers: {
         AuthorizationSignature: signature,
         AuthorizationExpire: String(expirationTime),
         VideoId: videoId,
-        LibraryId: String(BUNNY_LIBRARY_ID)
+        LibraryId: String(libraryId)
       },
       metadata: {
         filetype: file.type || 'video/mp4',
@@ -257,7 +301,8 @@ export async function uploadVideo(ctx, file, vid, kind, onProgress) {
 
   const title = file.name || 'Untitled';
 
-  if (BUNNY_LIBRARY_ID && BUNNY_API_KEY && BUNNY_CDN_HOST) {
+  const backendReady = await hasUploadBackend();
+  if ((BUNNY_LIBRARY_ID && BUNNY_API_KEY && BUNNY_CDN_HOST) || backendReady) {
     try {
       const videoId = await bunnyUpload(file, title, onProgress);
       return { storedSrc: videoId, srcBackend: 'bunny' };

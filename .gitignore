@@ -1,0 +1,7 @@
+data.env
+backend/data.env
+.env
+backend/.env
+node_modules/
+.vercel
+*.log

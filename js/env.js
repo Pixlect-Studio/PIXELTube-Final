@@ -1,16 +1,19 @@
 /* ============================================================
    PIXELTube — env.js
-   Loads .env at runtime in the browser.
+   Loads public config at runtime in the browser.
 
-   Browsers can't read .env files natively, so we fetch the file
-   as plain text, parse KEY=VALUE pairs, and cache the result.
+   Dual-end setup: secrets live in the backend (backend/data.env).
+   The browser fetches ONLY public values from GET /api/config.
+   A legacy fallback still reads ./data.env for fully static
+   deployments, but the Bunny API key is never expected here.
 
    Usage:
      import { loadEnv, getEnv } from './env.js';
      const env = await loadEnv();
-     const key = env.BUNNY_STREAM_API_KEY;
+     const key = env.BUNNY_CDN_HOST;
    ============================================================ */
 
+const BACKEND_CONFIG = '/api/config';
 const ENV_PATH = './data.env';
 
 let envCache = null;
@@ -24,22 +27,46 @@ export function loadEnv() {
   if (envCache) return Promise.resolve(envCache);
   if (envPromise) return envPromise;
 
-  envPromise = fetch(ENV_PATH, { cache: 'no-store' })
-    .then((res) => {
-      if (!res.ok) throw new Error(`${ENV_PATH} returned ${res.status}`);
-      return res.text();
-    })
-    .then((text) => {
-      const env = parseEnv(text);
+  envPromise = (async () => {
+  // 1) Preferred: backend /api/config (public values only — no secrets).
+  try {
+    const res = await fetch(BACKEND_CONFIG, { cache: 'no-store' });
+    if (res.ok) {
+      const cfg = await res.json();
+      const env = {
+        BUNNY_LIBRARY_ID:     cfg.BUNNY_LIBRARY_ID || '',
+        BUNNY_CDN_HOST:       cfg.BUNNY_CDN_HOST || '',
+        // The backend never publishes the Bunny API key; uploads are
+        // pre-signed server-side via POST /api/uploads/init.
+        BUNNY_STREAM_API_KEY: '',
+        ...(cfg.firebase ? {
+          FIREBASE_API_KEY: cfg.firebase.apiKey || '',
+          FIREBASE_PROJECT_ID: cfg.firebase.projectId || ''
+        } : {})
+      };
       envCache = env;
-      console.log('[env] loaded', Object.keys(env).length, 'keys');
+      console.log('[env] loaded from backend', Object.keys(env).length, 'keys (no secrets)');
       return env;
-    })
-    .catch((err) => {
-      console.warn('[env] failed to load', ENV_PATH, '-', err?.message);
-      envCache = {};
-      return envCache;
-    });
+    }
+  } catch (err) {
+    console.warn('[env] backend config unavailable:', err?.message || err);
+  }
+
+  // 2) Fallback: legacy static data.env (only public-ish values expected).
+  try {
+    const res = await fetch(ENV_PATH, { cache: 'no-store' });
+    if (!res.ok) throw new Error(`${ENV_PATH} returned ${res.status}`);
+    const text = await res.text();
+    const env = parseEnv(text);
+    envCache = env;
+    console.log('[env] loaded', Object.keys(env).length, 'keys');
+    return env;
+  } catch (err) {
+    console.warn('[env] failed to load', ENV_PATH, '-', err?.message);
+    envCache = {};
+    return envCache;
+  }
+})();
 
   return envPromise;
 }

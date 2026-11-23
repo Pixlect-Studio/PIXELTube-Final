@@ -1,0 +1,10 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "rewrites": {
+    "beforeFiles": [
+      { "source": "/(.*)\\.env", "destination": "/api/env-blocked" },
+      { "source": "/backend/:path*", "destination": "/api/env-blocked" },
+      { "source": "/domain.json", "destination": "/api/[[...route]]" }
+    ]
+  }
+}
