@@ -46,8 +46,12 @@ export function loadEnv() {
       };
       envCache = env;
       console.log('[env] loaded from backend', Object.keys(env).length, 'keys (no secrets)');
+      if (!env.BUNNY_LIBRARY_ID || !env.BUNNY_CDN_HOST) {
+        console.info('[env] backend reachable but BUNNY_LIBRARY_ID/BUNNY_CDN_HOST are empty — set them as Vercel environment variables (or DATA_ENV).');
+      }
       return env;
     }
+    console.warn('[env] /api/config returned', res.status, '— is the Edge function deployed?');
   } catch (err) {
     console.warn('[env] backend config unavailable:', err?.message || err);
   }
@@ -62,7 +66,8 @@ export function loadEnv() {
     console.log('[env] loaded', Object.keys(env).length, 'keys');
     return env;
   } catch (err) {
-    console.warn('[env] failed to load', ENV_PATH, '-', err?.message);
+    // Expected on backend deploys (data.env is server-side only).
+    console.info('[env] no legacy', ENV_PATH, '(normal on backend deployments) —', err?.message);
     envCache = {};
     return envCache;
   }
