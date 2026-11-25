@@ -29,7 +29,7 @@ if ('serviceWorker' in navigator && window.isSecureContext) {
 </script>
 <link rel="icon" type="image/png" href="./logo.png" />
 <!-- Bumped CSS version to force cache refresh -->
-<link rel="stylesheet" href="./styles/styles.css?v=103" />
+<link rel="stylesheet" href="./styles/styles.css?v=104" />
 <style>
   #pixlect-login {
     background: linear-gradient(135deg, var(--accent), #5b8cff);
@@ -51,14 +51,21 @@ if ('serviceWorker' in navigator && window.isSecureContext) {
 
 <div id="loader">
   <div class="nb-stage" aria-hidden="true">
+    <div class="nb-ambient"></div>
+    <div class="nb-particles"></div>
+    <div class="nb-energy-ring"></div>
+    <div class="nb-laser"></div>
+    <div class="nb-laser nb-laser-two"></div>
+    <div class="nb-logo-container">
+      <img src="./logo.png" class="nb-boot-logo" alt="PIXELTube">
+    </div>
+    <div class="nb-scanlines"></div>
+    <div class="nb-flash"></div>
     <div class="nb-ribbons"><i></i><i></i><i></i></div>
     <div class="nb-word">
       <b style="--i:0">P</b><span style="--i:1">I</span><span style="--i:2">X</span><span style="--i:3">E</span><span style="--i:4">L</span><span style="--i:5">T</span><span style="--i:6">u</span><span style="--i:7">b</span><span style="--i:8">e</span>
     </div>
-    <div class="nb-flash"></div>
-    <div class="nb-ring"></div>
-    <div class="nb-logo-wrap"><div class="nb-mark" data-px-shine="P:"><span class="nb-p" data-px-char="P">P</span><span class="nb-colon" data-px-char=":">:</span></div></div>
-    <div class="nb-brand">PIXEL<span>Tube</span></div>
+    <div class="nb-mark"><span class="nb-p" data-px-char="P">P</span><span class="nb-colon" data-px-char=":">:</span></div>
   </div>
   <div class="boot-news" id="bootNews" hidden>
     <div class="boot-news-card">
@@ -77,9 +84,11 @@ if ('serviceWorker' in navigator && window.isSecureContext) {
     </div>
   </div>
   <div class="loader-foot">
-    <div class="bar"></div>
-    <div class="status" id="loaderStatus">Connecting to Firebase…</div>
+    <div class="nb-loading-text"><span id="nbLoadLabel">POWERING UP</span><span id="nbPercent">0%</span></div>
+    <div class="bar"><div class="nb-bar-fill" id="nbBarFill"></div></div>
+    <div class="status" id="loaderStatus">INITIALIZING PIXELTUBE</div>
   </div>
+  <div class="nb-version">PIXELTUBE SYSTEM V1.1</div>
 </div>
 
 <header class="topbar">

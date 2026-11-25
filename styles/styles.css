@@ -73,9 +73,10 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 }
 #loader.hide{opacity:0;visibility:hidden;pointer-events:none}
 
-/* ---- Netflix-style cinematic bootup v3 (from test-bootup.html, ~6.8s) ----
-   P: blur-punches in with glow → shine sweep → slow zoom →
-   PIXELTube brand reveals below → logo zoom-out exit → news */
+/* ---- cinematic bootup v4 (ported from test-bootup.html, ~7.2s) ----
+   ambient glow → logo.png 3D entrance → energy ring + lasers →
+   floating particles → scanlines → progress readout →
+   final flash → news */
 #loader .nb-stage{
   position:absolute;inset:0;
   display:grid;place-items:center;
@@ -85,92 +86,136 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 }
 #loader .nb-dim{opacity:.12;filter:blur(10px);transition:opacity .5s ease,filter .5s ease}
 
-/* ribbons/flash/ring unused in v3 — clean black like the reference */
-#loader .nb-cinema .nb-ribbons,
-#loader .nb-cinema .nb-flash,
-#loader .nb-cinema .nb-ring,
-#loader .nb-cinema .nb-word{display:none}
+#loader .nb-cinema .nb-ribbons{display:none}
 
-#loader .nb-logo-wrap{
-  position:relative;
-  display:flex;align-items:center;justify-content:center;
-}
-#loader .nb-cinema .nb-logo-wrap{
-  opacity:0;
-  animation:nb-logo-zoom 6.2s ease-in-out forwards;
-}
-@keyframes nb-logo-zoom{
-  0%{opacity:0;transform:scale(.5);filter:blur(15px)}
-  14%{opacity:1;transform:scale(1);filter:blur(0)}
-  62%{opacity:1;transform:scale(1.09);filter:blur(0)}
-  88%{opacity:1;transform:scale(1.16);filter:blur(0)}
-  100%{opacity:0;transform:scale(3.6);filter:blur(6px)}
-}
+/* word / mark / ribbons are PIXEL-MODE elements — hidden by default so
+   they can never leak into cinematic or static boots */
+#loader .nb-word,#loader .nb-mark,#loader .nb-ribbons{display:none}
+#loader .nb-pixel .nb-word,#loader .nb-pixel .nb-mark{display:block}
+#loader .nb-pixel .nb-ribbons{display:flex}
 
-#loader .nb-mark{
-  position:relative;
-  display:flex;align-items:baseline;
-  font-size:min(24vw,270px);
-  font-weight:900;letter-spacing:-.075em;
-  color:var(--accent);
-  animation:nb-logo-glow 2s ease-in-out infinite alternate;
-}
-#loader .nb-p,#loader .nb-cinema .nb-p{color:var(--accent)}
-#loader .nb-colon,#loader .nb-cinema .nb-colon{color:var(--accent)}
-@keyframes nb-logo-glow{
-  from{text-shadow:0 0 15px rgba(124,92,255,.4)}
-  to{text-shadow:0 0 55px rgba(124,92,255,.85),0 0 110px rgba(124,92,255,.4)}
-}
-
-/* shine sweep across the P: (port of .logo::after) */
-#loader .nb-mark::after{
-  content:attr(data-px-shine);
-  position:absolute;inset:0;
-  background:linear-gradient(110deg,transparent 35%,#fff 48%,transparent 60%);
-  background-size:250% 100%;
-  background-clip:text;
-  -webkit-background-clip:text;
-  color:transparent;
-  animation:nb-shine 2s ease-in-out .6s forwards;
-}
-@keyframes nb-shine{
-  from{background-position:150% 0}
-  to{background-position:-150% 0}
-}
-
-#loader .nb-brand{
+#loader .nb-ambient{
   position:absolute;
-  font-family:Arial,'Helvetica Neue',Helvetica,sans-serif;
-  font-size:min(5vw,52px);
-  font-weight:900;
-  letter-spacing:.14em;
-  color:#fff;
+  width:600px;height:600px;border-radius:50%;
+  background:var(--accent);
+  filter:blur(180px);
   opacity:0;
-  animation:nb-brand-reveal 1.4s ease 3.9s forwards,
-            nb-brand-out .6s ease 5.7s forwards;
-  margin-top:min(24vw,290px);
+  animation:nb-ambient 3s ease .3s forwards;
 }
-#loader .nb-brand span{color:var(--accent)}
-@keyframes nb-brand-reveal{
-  0%{opacity:0;transform:scale(.8)}
-  100%{opacity:1;transform:scale(1)}
-}
-@keyframes nb-brand-out{
-  to{opacity:0;transform:scale(1.04)}
+@keyframes nb-ambient{
+  0%{opacity:0;transform:scale(.1)}
+  50%{opacity:.2;transform:scale(1)}
+  100%{opacity:.12;transform:scale(1.3)}
 }
 
-/* static fallback (skipped boot / reduced motion) */
-#loader .nb-static .nb-ribbons,#loader .nb-static .nb-word,#loader .nb-static .nb-flash,#loader .nb-static .nb-ring,#loader .nb-static .nb-brand{display:none}
-#loader .nb-static .nb-logo-wrap{opacity:1;animation:none}
-#loader .nb-static .nb-mark{opacity:1;transform:none;animation:none}
-#loader .nb-static .nb-mark::after{animation:none;opacity:0}
-#loader .nb-static .nb-colon{opacity:1;transform:none;animation:none}
+#loader .nb-particles{position:absolute;inset:0;overflow:hidden}
+#loader .nb-particle{
+  position:absolute;bottom:-20px;
+  width:3px;height:3px;border-radius:50%;
+  background:var(--accent);
+  box-shadow:0 0 10px var(--accent);
+  animation:nb-particle linear infinite;
+}
+@keyframes nb-particle{
+  from{transform:translateY(0) translateX(0);opacity:0}
+  15%{opacity:1}
+  85%{opacity:.8}
+  to{transform:translateY(-110vh) translateX(80px);opacity:0}
+}
 
-/* flash/ring base — only ever shown by their own mode animations */
-#loader .nb-flash,#loader .nb-ring{opacity:0;pointer-events:none}
-#loader .nb-pixel .nb-flash,#loader .nb-pixel .nb-ring,#loader .nb-pixel .nb-brand{display:none}
+#loader .nb-energy-ring{
+  position:absolute;
+  width:min(80vw,680px);aspect-ratio:1;
+  border:2px solid transparent;
+  border-top-color:var(--accent);
+  border-bottom-color:var(--accent);
+  border-radius:50%;
+  opacity:0;
+  box-shadow:0 0 25px rgba(124,92,255,.4);
+  animation:nb-ring-spin 3s linear infinite,nb-ring-reveal 1.5s ease .8s forwards;
+}
+@keyframes nb-ring-spin{to{transform:rotate(360deg)}}
+@keyframes nb-ring-reveal{to{opacity:.6}}
 
-/* ---- bootup news card ---- */
+#loader .nb-laser{
+  position:absolute;
+  width:120%;height:2px;left:-130%;top:30%;
+  background:linear-gradient(90deg,transparent,var(--accent),#fff,var(--accent),transparent);
+  box-shadow:0 0 20px var(--accent),0 0 50px var(--accent);
+  transform:rotate(-12deg);
+  animation:nb-laser-sweep 2s ease-in-out .7s forwards;
+  z-index:7;
+}
+#loader .nb-laser-two{
+  top:70%;animation-delay:1.5s;height:1px;opacity:.6;
+}
+@keyframes nb-laser-sweep{
+  0%{left:-130%}
+  45%{left:10%}
+  100%{left:130%}
+}
+
+#loader .nb-logo-container{
+  position:relative;z-index:5;
+  display:flex;justify-content:center;align-items:center;
+  transform-style:preserve-3d;perspective:1000px;
+}
+#loader .nb-boot-logo{
+  width:min(75vw,620px);max-height:65vh;object-fit:contain;
+  opacity:0;filter:brightness(.7);
+  transform:scale(.25) rotateX(25deg);
+  animation:nb-logo-entrance 2s cubic-bezier(.16,1,.3,1) .5s forwards,
+            nb-logo-float 3s ease-in-out 2.5s infinite;
+}
+@keyframes nb-logo-entrance{
+  0%{opacity:0;transform:scale(.25) rotateX(25deg);filter:blur(20px) brightness(2)}
+  60%{opacity:1;filter:blur(0) brightness(1.8)}
+  100%{opacity:1;transform:scale(1) rotateX(0);filter:blur(0) brightness(1)}
+}
+@keyframes nb-logo-float{
+  0%,100%{transform:translateY(0) scale(1)}
+  50%{transform:translateY(-9px) scale(1.015)}
+}
+
+#loader .nb-scanlines{
+  position:absolute;inset:0;z-index:8;pointer-events:none;
+  background:repeating-linear-gradient(to bottom,transparent 0px,transparent 3px,rgba(255,255,255,.025) 4px);
+}
+
+#loader .nb-flash{
+  position:absolute;inset:0;z-index:9;
+  background:#fff;opacity:0;pointer-events:none;
+}
+#loader .nb-complete .nb-flash{animation:nb-final-flash .7s ease}
+@keyframes nb-final-flash{
+  0%{opacity:0}
+  25%{opacity:.65}
+  100%{opacity:0}
+}
+
+/* pixel mode hides every cinema-only element */
+#loader .nb-pixel .nb-ambient,
+#loader .nb-pixel .nb-particles,
+#loader .nb-pixel .nb-energy-ring,
+#loader .nb-pixel .nb-laser,
+#loader .nb-pixel .nb-logo-container,
+#loader .nb-pixel .nb-scanlines,
+#loader .nb-pixel .nb-flash{display:none}
+
+/* static fallback (skipped boot / reduced motion): just the logo */
+#loader .nb-static .nb-ambient,
+#loader .nb-static .nb-particles,
+#loader .nb-static .nb-energy-ring,
+#loader .nb-static .nb-laser,
+#loader .nb-static .nb-scanlines,
+#loader .nb-static .nb-flash,
+#loader .nb-static .nb-word,
+#loader .nb-static .nb-mark,
+#loader .nb-static .nb-ribbons,
+#loader .nb-static .nb-loading-text{display:none}
+#loader .nb-static .nb-boot-logo{opacity:1;transform:none;filter:none;animation:none}
+
+/* ---- bootup news card ---- *//* ---- bootup news card ---- */
 #loader .boot-news{
   position:absolute;inset:0;z-index:10;
   display:grid;place-items:center;
@@ -219,27 +264,35 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
   pointer-events:auto;cursor:pointer;
 }
 
-/* loader footer: progress bar + status */
+/* loader footer: progress readout (label + % + bar + status) */
 #loader .loader-foot{
-  position:absolute;bottom:34px;left:0;right:0;z-index:12;
-  display:flex;flex-direction:column;align-items:center;gap:12px;
+  position:absolute;bottom:11%;left:50%;transform:translateX(-50%);
+  width:min(300px,70vw);z-index:12;
+  text-align:center;
+  display:flex;flex-direction:column;align-items:center;gap:0;
   pointer-events:none;
+  font-family:Arial,'Helvetica Neue',Helvetica,sans-serif;
+}
+#loader .nb-loading-text{
+  display:flex;justify-content:space-between;width:100%;
+  color:#aaa;font-size:10px;letter-spacing:3px;margin-bottom:12px;
 }
 #loader .bar{
-  width:180px;height:4px;border-radius:99px;background:rgba(255,255,255,.14);
+  width:100%;height:3px;border-radius:2px;background:#292929;
   overflow:hidden;position:relative;
 }
-#loader .bar::after{
-  content:'';position:absolute;inset:0;
-  background:var(--accent);
-  animation:slide 1.4s linear infinite;
-}
-@keyframes slide{
-  0%{transform:translateX(-100%)}
-  100%{transform:translateX(100%)}
+#loader .nb-bar-fill{
+  width:0%;height:100%;
+  background:linear-gradient(90deg,var(--accent),#fff);
+  box-shadow:0 0 15px var(--accent);
 }
 #loader .status{
-  font-size:12px;color:#8b93b8;letter-spacing:.3px;
+  margin-top:14px;color:#777;font-size:9px;letter-spacing:3px;
+}
+#loader .nb-version{
+  position:absolute;bottom:25px;right:30px;z-index:12;
+  font-size:9px;color:#555;letter-spacing:2px;
+  font-family:ui-monospace,Menlo,Consolas,monospace;
 }
 
 /* ============================================================
