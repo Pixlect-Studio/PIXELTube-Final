@@ -29,7 +29,7 @@ if ('serviceWorker' in navigator && window.isSecureContext) {
 </script>
 <link rel="icon" type="image/png" href="./logo.png" />
 <!-- Bumped CSS version to force cache refresh -->
-<link rel="stylesheet" href="./styles/styles.css?v=101" />
+<link rel="stylesheet" href="./styles/styles.css?v=103" />
 <style>
   #pixlect-login {
     background: linear-gradient(135deg, var(--accent), #5b8cff);
@@ -50,9 +50,33 @@ if ('serviceWorker' in navigator && window.isSecureContext) {
 <body>
 
 <div id="loader">
-  <div class="inner">
-    <img src="./logo.png" alt="PIXELTube" />
-    <div class="name"><b>PIXEL</b>Tube</div>
+  <div class="nb-stage" aria-hidden="true">
+    <div class="nb-ribbons"><i></i><i></i><i></i></div>
+    <div class="nb-word">
+      <b style="--i:0">P</b><span style="--i:1">I</span><span style="--i:2">X</span><span style="--i:3">E</span><span style="--i:4">L</span><span style="--i:5">T</span><span style="--i:6">u</span><span style="--i:7">b</span><span style="--i:8">e</span>
+    </div>
+    <div class="nb-flash"></div>
+    <div class="nb-ring"></div>
+    <div class="nb-logo-wrap"><div class="nb-mark" data-px-shine="P:"><span class="nb-p" data-px-char="P">P</span><span class="nb-colon" data-px-char=":">:</span></div></div>
+    <div class="nb-brand">PIXEL<span>Tube</span></div>
+  </div>
+  <div class="boot-news" id="bootNews" hidden>
+    <div class="boot-news-card">
+      <div class="boot-news-tag">📰 PIXELTube News</div>
+      <h2>🚀 <b>PIXELTube</b> V1.1 Now Released!</h2>
+      <ul>
+        <li><b>Backend-powered uploads</b> — Bunny Stream with server-side pre-signing, no 10 MB cap</li>
+        <li><b>Login on the backend</b> — Firebase auth served over Vercel Edge Nodes</li>
+        <li><b>Cinematic bootup</b> — this intro, with skip options in PIXELSettings</li>
+        <li><b>Faster playback</b> — HLS streaming straight from the Bunny CDN</li>
+      </ul>
+      <div class="boot-news-actions">
+        <button class="btn-secondary" data-news-disable type="button">Don't show again</button>
+        <button class="btn-primary" data-news-continue type="button">Continue to PIXELTube →</button>
+      </div>
+    </div>
+  </div>
+  <div class="loader-foot">
     <div class="bar"></div>
     <div class="status" id="loaderStatus">Connecting to Firebase…</div>
   </div>
@@ -108,6 +132,7 @@ if ('serviceWorker' in navigator && window.isSecureContext) {
 <div id="modalRoot"></div>
 
 <script src="./js/settings.js?v=101" defer></script>
+<script src="./js/boot.js?v=101" defer></script>
 
 <script src="https://cdn.jsdelivr.net/npm/tus-js-client@4.1.0/dist/tus.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.17/dist/hls.min.js"></script>

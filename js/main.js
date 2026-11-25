@@ -267,6 +267,11 @@ function setLoaderStatus(msg) {
   if (s) s.textContent = msg;
 }
 function hideLoader() {
+  // boot.js owns the cinematic timeline + news; delegate when present.
+  if (window.PIXELBoot && typeof window.PIXELBoot.appReady === 'function') {
+    window.PIXELBoot.appReady();
+    return;
+  }
   const l = document.getElementById('loader');
   if (l) l.classList.add('hide');
 }

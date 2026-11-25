@@ -1,0 +1,324 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PIXELTube | Startup</title>
+
+<style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background: #000;
+    color: white;
+    font-family: Arial, Helvetica, sans-serif;
+    overflow: hidden;
+}
+
+.intro {
+    position: fixed;
+    inset: 0;
+    background: #000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 5;
+    animation: introExit 1s ease 5.4s forwards;
+}
+
+.logo-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: zoomLogo 3.5s ease-in-out forwards;
+}
+
+.logo {
+    font-size: clamp(130px, 25vw, 260px);
+    font-weight: 1000;
+    letter-spacing: -20px;
+    color: #e50914;
+    text-shadow: 0 0 35px #e5091466;
+    position: relative;
+    animation: logoGlow 2s ease-in-out infinite alternate;
+}
+
+.logo::after {
+    content: "P:";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        110deg,
+        transparent 35%,
+        white 48%,
+        transparent 60%
+    );
+    background-size: 250% 100%;
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+    animation: shine 2s ease-in-out 0.5s forwards;
+}
+
+@keyframes shine {
+    from { background-position: 150% 0; }
+    to { background-position: -150% 0; }
+}
+
+@keyframes logoGlow {
+    from { text-shadow: 0 0 15px #e5091466; }
+    to { text-shadow: 0 0 55px #e50914; }
+}
+
+@keyframes zoomLogo {
+    0% {
+        opacity: 0;
+        transform: scale(0.5);
+        filter: blur(15px);
+    }
+    25% {
+        opacity: 1;
+        transform: scale(1);
+        filter: blur(0);
+    }
+    75% {
+        opacity: 1;
+        transform: scale(1.1);
+    }
+    100% {
+        opacity: 0;
+        transform: scale(4);
+    }
+}
+
+@keyframes introExit {
+    to {
+        opacity: 0;
+        visibility: hidden;
+    }
+}
+
+.brand {
+    position: absolute;
+    font-size: clamp(25px, 5vw, 55px);
+    font-weight: 900;
+    letter-spacing: 8px;
+    opacity: 0;
+    animation: brandReveal 1.4s ease 3.1s forwards;
+}
+
+.brand span {
+    color: #e50914;
+}
+
+@keyframes brandReveal {
+    0% { opacity: 0; transform: scale(0.8); }
+    100% { opacity: 1; transform: scale(1); }
+}
+
+/* Home screen */
+
+.home {
+    position: fixed;
+    inset: 0;
+    background: #080808;
+    opacity: 0;
+    animation: homeReveal 1.3s ease 5.7s forwards;
+    overflow-y: auto;
+}
+
+@keyframes homeReveal {
+    to { opacity: 1; }
+}
+
+nav {
+    height: 75px;
+    display: flex;
+    align-items: center;
+    padding: 0 5%;
+    gap: 35px;
+    background: linear-gradient(#000, transparent);
+    position: relative;
+    z-index: 2;
+}
+
+.nav-logo {
+    font-size: 30px;
+    font-weight: 1000;
+    color: white;
+}
+
+.nav-logo span {
+    color: #e50914;
+}
+
+nav a {
+    color: #ddd;
+    text-decoration: none;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.hero {
+    min-height: 470px;
+    display: flex;
+    align-items: center;
+    padding: 50px 7%;
+    background:
+        linear-gradient(90deg, #080808 0%, transparent 100%),
+        linear-gradient(0deg, #080808, transparent 50%),
+        radial-gradient(ellipse at 75% 30%, #4b1014, #190607 45%, #080808 75%);
+    margin-top: -75px;
+    padding-top: 120px;
+}
+
+.hero-content {
+    max-width: 550px;
+}
+
+.hero h1 {
+    font-size: clamp(40px, 7vw, 75px);
+    font-weight: 1000;
+    margin-bottom: 15px;
+}
+
+.hero p {
+    color: #ccc;
+    font-size: 15px;
+    line-height: 1.7;
+    margin-bottom: 25px;
+}
+
+.play {
+    background: white;
+    border: none;
+    padding: 13px 28px;
+    border-radius: 4px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.play:hover {
+    background: #ddd;
+}
+
+.row-title {
+    font-size: 21px;
+    margin: 10px 5% 15px;
+}
+
+.cards {
+    display: flex;
+    gap: 15px;
+    padding: 0 5% 35px;
+    overflow-x: auto;
+}
+
+.card {
+    min-width: 190px;
+    height: 115px;
+    border-radius: 7px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 25px;
+    font-weight: 900;
+    cursor: pointer;
+    transition: .3s;
+    background: linear-gradient(135deg, #350b13, #b20a20);
+}
+
+.card:nth-child(2) {
+    background: linear-gradient(135deg, #111, #333);
+}
+.card:nth-child(3) {
+    background: linear-gradient(135deg, #160d36, #6c27a9);
+}
+.card:nth-child(4) {
+    background: linear-gradient(135deg, #0c2830, #087e91);
+}
+.card:nth-child(5) {
+    background: linear-gradient(135deg, #3d1b0a, #d36a16);
+}
+
+.card:hover {
+    transform: scale(1.07);
+}
+
+::-webkit-scrollbar {
+    height: 5px;
+}
+::-webkit-scrollbar-thumb {
+    background: #e50914;
+}
+</style>
+</head>
+
+<body>
+
+<!-- CINEMATIC INTRO -->
+<div class="intro">
+
+    <div class="logo-wrap">
+        <div class="logo">P:</div>
+    </div>
+
+    <div class="brand">
+        PIXEL<span>Tube</span>
+    </div>
+
+</div>
+
+<!-- STREAMING HOME -->
+<div class="home">
+
+    <nav>
+        <div class="nav-logo">PIXEL<span>Tube</span></div>
+        <a href="#">Home</a>
+        <a href="#">Trending</a>
+        <a href="#">Movies</a>
+        <a href="#">Gaming</a>
+        <a href="#">Music</a>
+    </nav>
+
+    <section class="hero">
+        <div class="hero-content">
+            <h1>PIXELTube</h1>
+            <p>
+                Discover amazing videos, movies, gaming,
+                entertainment and much more.
+                Your world. Your entertainment.
+            </p>
+            <button class="play" onclick="alert('Welcome to PIXELTube!')">
+                ▶ Explore Now
+            </button>
+        </div>
+    </section>
+
+    <h2 class="row-title">Trending Now</h2>
+    <div class="cards">
+        <div class="card">GAMING</div>
+        <div class="card">MOVIES</div>
+        <div class="card">ANIME</div>
+        <div class="card">MUSIC</div>
+        <div class="card">SPORTS</div>
+    </div>
+
+    <h2 class="row-title">Recommended For You</h2>
+    <div class="cards">
+        <div class="card">PIXEL</div>
+        <div class="card">VIDEOS</div>
+        <div class="card">STREAM</div>
+        <div class="card">DISCOVER</div>
+    </div>
+
+</div>
+
+</body>
+</html>

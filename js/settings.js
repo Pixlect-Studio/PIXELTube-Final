@@ -18,6 +18,24 @@
 
   const LS_THEME  = 'pixeltube-theme';
   const LS_ACCENT = 'pixeltube-accent';
+  const LS_BOOT   = 'pixeltube-boot-enabled';
+  const LS_STYLE  = 'pixeltube-boot-style';
+  const LS_NEWS   = 'pixeltube-news-enabled';
+
+  const getFlag = (key, dflt) => {
+    try { const v = localStorage.getItem(key); return v === null ? dflt : v === '1'; }
+    catch (_) { return dflt; }
+  };
+  const setFlag = (key, val) => {
+    try { localStorage.setItem(key, val ? '1' : '0'); } catch (_) {}
+  };
+  const getStyle = () => {
+    try { const v = localStorage.getItem(LS_STYLE); return v === 'pixel' ? 'pixel' : 'cinema'; }
+    catch (_) { return 'cinema'; }
+  };
+  const setStyle = (val) => {
+    try { localStorage.setItem(LS_STYLE, val === 'pixel' ? 'pixel' : 'cinema'); } catch (_) {}
+  };
 
   const getTheme  = () => document.documentElement.dataset.theme === 'light' ? 'light' : 'dark';
   const getAccent = () => document.documentElement.dataset.accent || 'midnight';
@@ -38,7 +56,7 @@
     const accent = getAccent();
     return `
       <div class="settings-panel">
-        <h2><b>PIXEL</b>Settings</h2>
+        <h2 data-glitch-text="PIXELSettings"><b>PIXEL</b>Settings</h2>
         <div class="settings-sub">Personalize how PIXELTube looks on this device.</div>
 
         <div class="settings-group">
@@ -67,6 +85,27 @@
           </div>
         </div>
 
+        <div class="settings-group">
+          <label class="settings-label">Boot experience</label>
+          <div class="mode-row">
+            <button class="mode-btn ${getFlag(LS_BOOT, true) ? 'active' : ''}" data-settings-boot="${getFlag(LS_BOOT, true) ? '0' : '1'}" type="button" title="Play the intro when the app loads">
+              ✨ Bootup intro
+            </button>
+            <button class="mode-btn ${getFlag(LS_NEWS, true) ? 'active' : ''}" data-settings-news="${getFlag(LS_NEWS, true) ? '0' : '1'}" type="button" title="Release notes after the intro">
+              📰 Startup news
+            </button>
+          </div>
+          <div class="mode-row">
+            <button class="mode-btn ${getStyle() === 'cinema' ? 'active' : ''}" data-settings-boot-style="cinema" type="button" title="Netflix-style reveal with ribbons and a punch zoom">
+              🎬 Cinematic
+            </button>
+            <button class="mode-btn ${getStyle() === 'pixel' ? 'active' : ''}" data-settings-boot-style="pixel" type="button" title="Peaceful pixel-art intro with CSS glitches and scanlines">
+              🕹️ Pixel calm
+            </button>
+          </div>
+          <div class="settings-sub">Highlighted = shown on the next visit. Pick a style: Cinematic (ribbons + punch zoom) or Pixel calm (slow, pixelated, glitchy).</div>
+        </div>
+
         <div class="settings-actions">
           <button class="btn-secondary" data-settings-reset type="button">Reset to defaults</button>
           <button class="btn-primary" data-settings-close type="button">Done</button>
@@ -75,7 +114,13 @@
   }
 
   function refreshPanel() {
-    if (panelRoot) panelRoot.innerHTML = buildPanel();
+    if (!panelRoot) return;
+    // Swap ONLY the panel inside the modal — replacing panelRoot.innerHTML
+    // outright would drop the .modal-backdrop/.modal-wrap wrapper, breaking
+    // centering and the click-outside-to-close behaviour.
+    const current = panelRoot.querySelector('.settings-panel');
+    if (current) current.outerHTML = buildPanel();
+    else panelRoot.innerHTML = buildPanel();
   }
 
   function openPanel() {
@@ -105,6 +150,27 @@
     const accentBtn = e.target.closest('[data-settings-accent]');
     if (accentBtn) {
       applyAccent(accentBtn.dataset.settingsAccent);
+      refreshPanel();
+      return;
+    }
+
+    const bootBtn = e.target.closest('[data-settings-boot]');
+    if (bootBtn) {
+      setFlag(LS_BOOT, bootBtn.dataset.settingsBoot === '1');
+      refreshPanel();
+      return;
+    }
+
+    const styleBtn = e.target.closest('[data-settings-boot-style]');
+    if (styleBtn) {
+      setStyle(styleBtn.dataset.settingsBootStyle);
+      refreshPanel();
+      return;
+    }
+
+    const newsBtn = e.target.closest('[data-settings-news]');
+    if (newsBtn) {
+      setFlag(LS_NEWS, newsBtn.dataset.settingsNews === '1');
       refreshPanel();
       return;
     }

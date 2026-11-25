@@ -1,9 +1,10 @@
-const CACHE_NAME = 'pixeltube-app-js-v15';
+const CACHE_NAME = 'pixeltube-app-js-v17';
 const APP_SCRIPTS = [
   './js/main.js?v=101',
   './js/helpers.js',
   './js/storage.js',
   './js/env.js',
+  './js/boot.js',
   './js/channel.js',
   './js/sec.js?v=32',
   './js/studio.js',
