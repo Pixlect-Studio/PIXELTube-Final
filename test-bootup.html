@@ -4,7 +4,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PIXELTube | Startup</title>
+<title>PIXELTube</title>
 
 <style>
 * {
@@ -16,207 +16,340 @@
 body {
     background: #000;
     color: white;
-    font-family: Arial, Helvetica, sans-serif;
+    font-family: Arial, sans-serif;
     overflow: hidden;
 }
+
+/* ===== CINEMATIC INTRO ===== */
 
 .intro {
     position: fixed;
     inset: 0;
+    z-index: 100;
     background: #000;
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 5;
-    animation: introExit 1s ease 5.4s forwards;
+    overflow: hidden;
+    perspective: 1000px;
+    transition: opacity 1.1s ease, visibility 1.1s;
 }
 
-.logo-wrap {
-    position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    animation: zoomLogo 3.5s ease-in-out forwards;
+.intro.hide {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
 }
 
-.logo {
-    font-size: clamp(130px, 25vw, 260px);
-    font-weight: 1000;
-    letter-spacing: -20px;
-    color: #e50914;
-    text-shadow: 0 0 35px #e5091466;
-    position: relative;
-    animation: logoGlow 2s ease-in-out infinite alternate;
-}
+/* Background glow */
 
-.logo::after {
-    content: "P:";
+.ambient {
     position: absolute;
-    inset: 0;
-    background: linear-gradient(
-        110deg,
-        transparent 35%,
-        white 48%,
-        transparent 60%
-    );
-    background-size: 250% 100%;
-    background-clip: text;
-    -webkit-background-clip: text;
-    color: transparent;
-    animation: shine 2s ease-in-out 0.5s forwards;
+    width: 600px;
+    height: 600px;
+    border-radius: 50%;
+    background: #e50914;
+    filter: blur(180px);
+    opacity: 0;
+    animation: ambient 3s ease 0.3s forwards;
 }
 
-@keyframes shine {
-    from { background-position: 150% 0; }
-    to { background-position: -150% 0; }
+@keyframes ambient {
+    0% { opacity: 0; transform: scale(.1); }
+    50% { opacity: .2; transform: scale(1); }
+    100% { opacity: .12; transform: scale(1.3); }
 }
 
-@keyframes logoGlow {
-    from { text-shadow: 0 0 15px #e5091466; }
-    to { text-shadow: 0 0 55px #e50914; }
+/* Logo */
+
+.logo-container {
+    position: relative;
+    z-index: 5;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transform-style: preserve-3d;
 }
 
-@keyframes zoomLogo {
+.boot-logo {
+    width: min(75vw, 620px);
+    max-height: 65vh;
+    object-fit: contain;
+    opacity: 0;
+    filter: brightness(.7);
+    transform: scale(.25) rotateX(25deg);
+    animation: logoEntrance 2s cubic-bezier(.16,1,.3,1) .5s forwards,
+               logoFloat 3s ease-in-out 2.5s infinite;
+}
+
+@keyframes logoEntrance {
     0% {
         opacity: 0;
-        transform: scale(0.5);
-        filter: blur(15px);
+        transform: scale(.25) rotateX(25deg);
+        filter: blur(20px) brightness(2);
     }
-    25% {
+    60% {
         opacity: 1;
-        transform: scale(1);
-        filter: blur(0);
-    }
-    75% {
-        opacity: 1;
-        transform: scale(1.1);
+        filter: blur(0) brightness(1.8);
     }
     100% {
-        opacity: 0;
-        transform: scale(4);
+        opacity: 1;
+        transform: scale(1) rotateX(0);
+        filter: blur(0) brightness(1);
     }
 }
 
-@keyframes introExit {
-    to {
-        opacity: 0;
-        visibility: hidden;
-    }
+@keyframes logoFloat {
+    0%, 100% { transform: translateY(0) scale(1); }
+    50% { transform: translateY(-9px) scale(1.015); }
 }
 
-.brand {
+/* Red energy ring */
+
+.energy-ring {
     position: absolute;
-    font-size: clamp(25px, 5vw, 55px);
-    font-weight: 900;
-    letter-spacing: 8px;
+    width: min(80vw, 680px);
+    aspect-ratio: 1;
+    border: 2px solid transparent;
+    border-top-color: #ff0015;
+    border-bottom-color: #ff0015;
+    border-radius: 50%;
     opacity: 0;
-    animation: brandReveal 1.4s ease 3.1s forwards;
+    box-shadow: 0 0 25px #e5091466;
+    animation: ringSpin 3s linear infinite, ringReveal 1.5s ease .8s forwards;
 }
 
-.brand span {
-    color: #e50914;
+@keyframes ringSpin {
+    to { transform: rotate(360deg); }
 }
 
-@keyframes brandReveal {
-    0% { opacity: 0; transform: scale(0.8); }
-    100% { opacity: 1; transform: scale(1); }
+@keyframes ringReveal {
+    to { opacity: .6; }
 }
 
-/* Home screen */
+/* Laser beams */
+
+.laser {
+    position: absolute;
+    width: 120%;
+    height: 2px;
+    left: -130%;
+    background: linear-gradient(90deg,
+        transparent,
+        #e50914,
+        white,
+        #e50914,
+        transparent);
+    box-shadow: 0 0 20px #ff0015, 0 0 50px #ff0015;
+    transform: rotate(-12deg);
+    animation: laserSweep 2s ease-in-out .7s forwards;
+    z-index: 7;
+}
+
+.laser.two {
+    top: 70%;
+    animation-delay: 1.5s;
+    height: 1px;
+    opacity: .6;
+}
+
+@keyframes laserSweep {
+    0% { left: -130%; }
+    45% { left: 10%; }
+    100% { left: 130%; }
+}
+
+/* Flash */
+
+.flash {
+    position: absolute;
+    inset: 0;
+    z-index: 9;
+    background: white;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.intro.complete .flash {
+    animation: finalFlash .7s ease;
+}
+
+@keyframes finalFlash {
+    0% { opacity: 0; }
+    25% { opacity: .65; }
+    100% { opacity: 0; }
+}
+
+/* Particles */
+
+.particles {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+}
+
+.particle {
+    position: absolute;
+    bottom: -20px;
+    width: 3px;
+    height: 3px;
+    border-radius: 50%;
+    background: #ff1828;
+    box-shadow: 0 0 10px #ff0015;
+    animation: particleMove linear infinite;
+}
+
+@keyframes particleMove {
+    from { transform: translateY(0) translateX(0); opacity: 0; }
+    15% { opacity: 1; }
+    85% { opacity: .8; }
+    to { transform: translateY(-110vh) translateX(80px); opacity: 0; }
+}
+
+/* Scanlines */
+
+.scanlines {
+    position: absolute;
+    inset: 0;
+    z-index: 8;
+    pointer-events: none;
+    background: repeating-linear-gradient(
+        to bottom,
+        transparent 0px,
+        transparent 3px,
+        rgba(255,255,255,.025) 4px
+    );
+}
+
+/* Loading */
+
+.loader {
+    position: absolute;
+    bottom: 11%;
+    width: min(300px, 70vw);
+    text-align: center;
+    z-index: 10;
+}
+
+.loading-text {
+    display: flex;
+    justify-content: space-between;
+    color: #aaa;
+    font-size: 10px;
+    letter-spacing: 3px;
+    margin-bottom: 12px;
+}
+
+.bar {
+    width: 100%;
+    height: 3px;
+    background: #292929;
+    overflow: hidden;
+}
+
+.bar-fill {
+    width: 0%;
+    height: 100%;
+    background: linear-gradient(90deg, #9b000b, #ff0015, white);
+    box-shadow: 0 0 15px red;
+    transition: width .1s linear;
+}
+
+.loading-status {
+    margin-top: 14px;
+    color: #777;
+    font-size: 9px;
+    letter-spacing: 3px;
+}
+
+.version {
+    position: absolute;
+    bottom: 25px;
+    right: 30px;
+    font-size: 9px;
+    color: #444;
+    letter-spacing: 2px;
+}
+
+/* ===== HOMEPAGE ===== */
 
 .home {
     position: fixed;
     inset: 0;
+    overflow-y: auto;
     background: #080808;
     opacity: 0;
-    animation: homeReveal 1.3s ease 5.7s forwards;
-    overflow-y: auto;
+    transition: opacity 1s ease;
+    pointer-events: none;
 }
 
-@keyframes homeReveal {
-    to { opacity: 1; }
+.home.show {
+    opacity: 1;
+    pointer-events: auto;
 }
 
 nav {
     height: 75px;
     display: flex;
     align-items: center;
+    gap: 30px;
     padding: 0 5%;
-    gap: 35px;
-    background: linear-gradient(#000, transparent);
-    position: relative;
-    z-index: 2;
+    background: #080808;
 }
 
 .nav-logo {
-    font-size: 30px;
-    font-weight: 1000;
-    color: white;
-}
-
-.nav-logo span {
-    color: #e50914;
+    width: 145px;
+    height: 60px;
+    object-fit: contain;
 }
 
 nav a {
     color: #ddd;
     text-decoration: none;
     font-size: 14px;
-    cursor: pointer;
 }
 
 .hero {
-    min-height: 470px;
+    min-height: 440px;
+    padding: 100px 7%;
     display: flex;
     align-items: center;
-    padding: 50px 7%;
     background:
-        linear-gradient(90deg, #080808 0%, transparent 100%),
-        linear-gradient(0deg, #080808, transparent 50%),
-        radial-gradient(ellipse at 75% 30%, #4b1014, #190607 45%, #080808 75%);
-    margin-top: -75px;
-    padding-top: 120px;
-}
-
-.hero-content {
-    max-width: 550px;
+        linear-gradient(90deg, #080808, transparent),
+        linear-gradient(0deg, #080808, transparent),
+        radial-gradient(ellipse at 75% 30%, #4b1014, #080808 75%);
 }
 
 .hero h1 {
     font-size: clamp(40px, 7vw, 75px);
-    font-weight: 1000;
     margin-bottom: 15px;
 }
 
 .hero p {
+    max-width: 500px;
     color: #ccc;
-    font-size: 15px;
     line-height: 1.7;
     margin-bottom: 25px;
 }
 
-.play {
-    background: white;
+button {
+    background: #e50914;
+    color: white;
     border: none;
-    padding: 13px 28px;
-    border-radius: 4px;
+    padding: 14px 28px;
+    border-radius: 5px;
     font-weight: bold;
     cursor: pointer;
 }
 
-.play:hover {
-    background: #ddd;
-}
-
 .row-title {
-    font-size: 21px;
-    margin: 10px 5% 15px;
+    margin: 20px 5%;
 }
 
 .cards {
     display: flex;
     gap: 15px;
-    padding: 0 5% 35px;
+    padding: 0 5% 30px;
     overflow-x: auto;
 }
 
@@ -224,18 +357,18 @@ nav a {
     min-width: 190px;
     height: 115px;
     border-radius: 7px;
+    background: linear-gradient(135deg, #350b13, #b20a20);
     display: flex;
     justify-content: center;
     align-items: center;
-    font-size: 25px;
-    font-weight: 900;
-    cursor: pointer;
+    font-size: 22px;
+    font-weight: bold;
     transition: .3s;
-    background: linear-gradient(135deg, #350b13, #b20a20);
+    cursor: pointer;
 }
 
 .card:nth-child(2) {
-    background: linear-gradient(135deg, #111, #333);
+    background: linear-gradient(135deg, #111, #444);
 }
 .card:nth-child(3) {
     background: linear-gradient(135deg, #160d36, #6c27a9);
@@ -243,43 +376,67 @@ nav a {
 .card:nth-child(4) {
     background: linear-gradient(135deg, #0c2830, #087e91);
 }
-.card:nth-child(5) {
-    background: linear-gradient(135deg, #3d1b0a, #d36a16);
-}
 
 .card:hover {
-    transform: scale(1.07);
+    transform: scale(1.06);
 }
 
-::-webkit-scrollbar {
-    height: 5px;
-}
-::-webkit-scrollbar-thumb {
-    background: #e50914;
+@media(max-width:600px) {
+    nav { gap: 12px; }
+    nav a { font-size: 11px; }
+    .nav-logo { width: 95px; }
+    .boot-logo { width: 85vw; }
 }
 </style>
 </head>
 
 <body>
 
-<!-- CINEMATIC INTRO -->
-<div class="intro">
+<!-- INTRO -->
 
-    <div class="logo-wrap">
-        <div class="logo">P:</div>
+<div class="intro" id="intro">
+
+    <div class="ambient"></div>
+
+    <div class="particles" id="particles"></div>
+
+    <div class="energy-ring"></div>
+
+    <div class="laser"></div>
+    <div class="laser two"></div>
+
+    <div class="logo-container">
+        <img src="logo.png" class="boot-logo" alt="PIXELTube">
     </div>
 
-    <div class="brand">
-        PIXEL<span>Tube</span>
+    <div class="loader">
+        <div class="loading-text">
+            <span id="loadLabel">POWERING UP</span>
+            <span id="percent">0%</span>
+        </div>
+
+        <div class="bar">
+            <div class="bar-fill" id="fill"></div>
+        </div>
+
+        <div class="loading-status" id="status">
+            INITIALIZING PIXELTUBE
+        </div>
     </div>
+
+    <div class="version">PIXELTube SYSTEM V1.0</div>
+
+    <div class="scanlines"></div>
+    <div class="flash"></div>
 
 </div>
 
-<!-- STREAMING HOME -->
-<div class="home">
+<!-- HOME -->
+
+<div class="home" id="home">
 
     <nav>
-        <div class="nav-logo">PIXEL<span>Tube</span></div>
+        <img src="logo.png" class="nav-logo" alt="PIXELTube">
         <a href="#">Home</a>
         <a href="#">Trending</a>
         <a href="#">Movies</a>
@@ -288,29 +445,28 @@ nav a {
     </nav>
 
     <section class="hero">
-        <div class="hero-content">
+        <div>
             <h1>PIXELTube</h1>
             <p>
                 Discover amazing videos, movies, gaming,
-                entertainment and much more.
-                Your world. Your entertainment.
+                music and entertainment. Your world,
+                your entertainment.
             </p>
-            <button class="play" onclick="alert('Welcome to PIXELTube!')">
-                ▶ Explore Now
-            </button>
+            <button>▶ Explore Now</button>
         </div>
     </section>
 
     <h2 class="row-title">Trending Now</h2>
+
     <div class="cards">
         <div class="card">GAMING</div>
         <div class="card">MOVIES</div>
         <div class="card">ANIME</div>
         <div class="card">MUSIC</div>
-        <div class="card">SPORTS</div>
     </div>
 
     <h2 class="row-title">Recommended For You</h2>
+
     <div class="cards">
         <div class="card">PIXEL</div>
         <div class="card">VIDEOS</div>
@@ -319,6 +475,86 @@ nav a {
     </div>
 
 </div>
+
+<script>
+const intro = document.getElementById("intro");
+const home = document.getElementById("home");
+const fill = document.getElementById("fill");
+const percent = document.getElementById("percent");
+const status = document.getElementById("status");
+const loadLabel = document.getElementById("loadLabel");
+
+/* CREATE FLOATING PARTICLES */
+
+const particleBox = document.getElementById("particles");
+
+for (let i = 0; i < 65; i++) {
+    const particle = document.createElement("div");
+    particle.className = "particle";
+
+    particle.style.left = Math.random() * 100 + "%";
+    particle.style.animationDuration = (3 + Math.random() * 6) + "s";
+    particle.style.animationDelay = Math.random() * 5 + "s";
+    particle.style.opacity = Math.random();
+
+    particleBox.appendChild(particle);
+}
+
+/* BOOT PROGRESS */
+
+const messages = [
+    "INITIALIZING PIXELTUBE",
+    "LOADING GRAPHICS ENGINE",
+    "CONNECTING TO SERVERS",
+    "PREPARING INTERFACE",
+    "OPTIMIZING EXPERIENCE",
+    "STARTING PIXELTUBE",
+    "SYSTEM READY"
+];
+
+let progress = 0;
+
+const timer = setInterval(() => {
+
+    progress += Math.random() * 2.3 + 0.8;
+
+    if (progress >= 100) {
+        progress = 100;
+        clearInterval(timer);
+
+        loadLabel.textContent = "COMPLETE";
+        status.textContent = "WELCOME TO PIXELTUBE";
+
+        intro.classList.add("complete");
+
+        setTimeout(() => {
+            intro.classList.add("hide");
+            home.classList.add("show");
+        }, 800);
+    }
+
+    const value = Math.floor(progress);
+
+    fill.style.width = value + "%";
+    percent.textContent = value + "%";
+
+    const index = Math.min(
+        Math.floor(value / 17),
+        messages.length - 1
+    );
+
+    status.textContent = messages[index];
+
+    if (value < 35) {
+        loadLabel.textContent = "POWERING UP";
+    } else if (value < 70) {
+        loadLabel.textContent = "LOADING";
+    } else if (value < 100) {
+        loadLabel.textContent = "FINALIZING";
+    }
+
+}, 90);
+</script>
 
 </body>
 </html>
