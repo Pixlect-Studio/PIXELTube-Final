@@ -19,8 +19,6 @@
   const LS_THEME  = 'pixeltube-theme';
   const LS_ACCENT = 'pixeltube-accent';
   const LS_BOOT   = 'pixeltube-boot-enabled';
-  const LS_STYLE  = 'pixeltube-boot-style';
-  const LS_NEWS   = 'pixeltube-news-enabled';
 
   const getFlag = (key, dflt) => {
     try { const v = localStorage.getItem(key); return v === null ? dflt : v === '1'; }
@@ -28,13 +26,6 @@
   };
   const setFlag = (key, val) => {
     try { localStorage.setItem(key, val ? '1' : '0'); } catch (_) {}
-  };
-  const getStyle = () => {
-    try { const v = localStorage.getItem(LS_STYLE); return v === 'pixel' ? 'pixel' : 'cinema'; }
-    catch (_) { return 'cinema'; }
-  };
-  const setStyle = (val) => {
-    try { localStorage.setItem(LS_STYLE, val === 'pixel' ? 'pixel' : 'cinema'); } catch (_) {}
   };
 
   const getTheme  = () => document.documentElement.dataset.theme === 'light' ? 'light' : 'dark';
@@ -88,22 +79,11 @@
         <div class="settings-group">
           <label class="settings-label">Boot experience</label>
           <div class="mode-row">
-            <button class="mode-btn ${getFlag(LS_BOOT, true) ? 'active' : ''}" data-settings-boot="${getFlag(LS_BOOT, true) ? '0' : '1'}" type="button" title="Play the intro when the app loads">
-              ✨ Bootup intro
-            </button>
-            <button class="mode-btn ${getFlag(LS_NEWS, true) ? 'active' : ''}" data-settings-news="${getFlag(LS_NEWS, true) ? '0' : '1'}" type="button" title="Release notes after the intro">
-              📰 Startup news
+            <button class="mode-btn ${getFlag(LS_BOOT, true) ? 'active' : ''}" data-settings-boot="${getFlag(LS_BOOT, true) ? '0' : '1'}" type="button" title="Show the loading screen when the app loads">
+              ✨ Loading screen
             </button>
           </div>
-          <div class="mode-row">
-            <button class="mode-btn ${getStyle() === 'cinema' ? 'active' : ''}" data-settings-boot-style="cinema" type="button" title="Netflix-style reveal with ribbons and a punch zoom">
-              🎬 Cinematic
-            </button>
-            <button class="mode-btn ${getStyle() === 'pixel' ? 'active' : ''}" data-settings-boot-style="pixel" type="button" title="Peaceful pixel-art intro with CSS glitches and scanlines">
-              🕹️ Pixel calm
-            </button>
-          </div>
-          <div class="settings-sub">Highlighted = shown on the next visit. Pick a style: Cinematic (ribbons + punch zoom) or Pixel calm (slow, pixelated, glitchy).</div>
+          <div class="settings-sub">Highlighted = the loading screen shows on the next visit.</div>
         </div>
 
         <div class="settings-actions">
@@ -157,20 +137,6 @@
     const bootBtn = e.target.closest('[data-settings-boot]');
     if (bootBtn) {
       setFlag(LS_BOOT, bootBtn.dataset.settingsBoot === '1');
-      refreshPanel();
-      return;
-    }
-
-    const styleBtn = e.target.closest('[data-settings-boot-style]');
-    if (styleBtn) {
-      setStyle(styleBtn.dataset.settingsBootStyle);
-      refreshPanel();
-      return;
-    }
-
-    const newsBtn = e.target.closest('[data-settings-news]');
-    if (newsBtn) {
-      setFlag(LS_NEWS, newsBtn.dataset.settingsNews === '1');
       refreshPanel();
       return;
     }
