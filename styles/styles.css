@@ -73,6 +73,9 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 }
 #loader.hide{opacity:0;visibility:hidden;pointer-events:none}
 
+/* Cinematic bootup lives directly in index.html inside #loader;
+   its scoped styles are there, and the FX engines in boot-cinema.js. */
+
 /* ---- cinematic bootup v4 (ported from test-bootup.html, ~7.2s) ----
    ambient glow → logo.png 3D entrance → energy ring + lasers →
    floating particles → scanlines → progress readout →

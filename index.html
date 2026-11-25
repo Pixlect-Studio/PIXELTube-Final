@@ -30,6 +30,110 @@ if ('serviceWorker' in navigator && window.isSecureContext) {
 <link rel="icon" type="image/png" href="./logo.png" />
 <!-- Bumped CSS version to force cache refresh -->
 <link rel="stylesheet" href="./styles/styles.css?v=104" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Silkscreen:wght@400;700&family=Space+Grotesk:wght@500;700;800&display=swap" rel="stylesheet" />
+<style>
+  /* ============================================================
+     CINEMATIC BOOTUP (moved directly from test-bootup.html)
+     Scoped under #loader so it can't affect the app's styles.
+     ============================================================ */
+  #loader{
+    display:flex;flex-direction:column;justify-content:space-between;
+    overflow:hidden;background:#06060a;color:#f8fafc;
+    font-family:'Space Grotesk',sans-serif;user-select:none;
+  }
+  #loader .cin-stage{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:space-between}
+  #loader.nb-dim .cin-stage{opacity:.12;filter:blur(10px);transition:opacity .5s ease,filter .5s ease}
+  #loader .boot-news{z-index:60}
+
+  #loader .pixel-grid-overlay{
+    position:absolute;inset:0;pointer-events-none;z-index:0;opacity:.7;
+    background-image:
+      linear-gradient(to right, rgba(255,255,255,.025) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(255,255,255,.025) 1px, transparent 1px);
+    background-size:20px 20px;
+  }
+  #loader .crt-scanlines{
+    position:absolute;inset:0;pointer-events-none;z-index:0;opacity:.45;
+    background:linear-gradient(rgba(18,16,16,0) 50%, rgba(0,0,0,.42) 50%);
+    background-size:100% 4px;
+  }
+  #loader .fx-canvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:1}
+  #loader .screen-flash{position:absolute;inset:0;background:#fff;z-index:2;pointer-events:none;opacity:0;transition:opacity .45s ease-out}
+  #loader .screen-flash.flash-now{opacity:.75;transition:none}
+
+  /* ---- top HUD ---- */
+  #loader .cin-hud{position:relative;z-index:30;width:100%;padding:20px 16px 0;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px}
+  @media (min-width:640px){ #loader .cin-hud{padding:28px 32px 0} }
+  #loader .seq-pill{display:inline-flex;align-items:center;gap:10px;padding:8px 14px;border-radius:9999px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);box-shadow:0 10px 15px -3px rgba(0,0,0,.4)}
+  #loader .status-dot{width:8px;height:8px;border-radius:9999px;background:#00f5d4;animation:pt-ping 1.2s cubic-bezier(0,0,.2,1) infinite}
+  @keyframes pt-ping{75%,100%{transform:scale(1.8);opacity:0}0%{transform:scale(1);opacity:1}}
+  #loader .sequence-badge{font-family:'Silkscreen',monospace;font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:#e2e8f0}
+  @media (min-width:640px){ #loader .sequence-badge{font-size:12px} }
+  #loader .audio-btn{display:inline-flex;align-items:center;gap:8px;padding:8px 16px;border-radius:9999px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.15);color:#fff;font-family:inherit;font-size:12px;font-weight:500;cursor:pointer;transition:all .2s;box-shadow:0 10px 15px -3px rgba(0,0,0,.4)}
+  @media (min-width:640px){ #loader .audio-btn{font-size:14px} }
+  #loader .audio-btn:hover{background:rgba(255,255,255,.14)}
+  #loader .audio-btn:active{transform:scale(.95)}
+  #loader .audio-icon{font-size:16px;line-height:1}
+
+  /* ---- center stage ---- */
+  #loader .cin-center{position:relative;z-index:30;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0 16px;text-align:center}
+  .emblem-box{position:relative;width:132px;height:132px;display:flex;align-items:center;justify-content:center;opacity:0;will-change:transform,opacity,filter,clip-path}
+  @media (min-width:640px){ .emblem-box{width:164px;height:164px} }
+  .emblem-halo{position:absolute;inset:-28px;border-radius:9999px;background:radial-gradient(circle, rgba(229,9,20,.45) 0%, rgba(255,42,109,.22) 45%, rgba(0,245,212,.08) 70%, transparent 100%);filter:blur(22px);opacity:0;z-index:-1;transition:opacity .8s ease,transform .8s ease}
+  .emblem-halo.active{opacity:1;animation:haloBreath 3.5s ease-in-out infinite alternate}
+  @keyframes haloBreath{0%{transform:scale(.95);opacity:.75}100%{transform:scale(1.12);opacity:1}}
+  #loader .logo-img{width:100%;height:100%;object-fit:contain;border-radius:16px}
+  #loader .logo-svg-fallback{display:none;width:100%;height:100%;align-items:center;justify-content:center}
+  #loader .logo-svg-fallback.show{display:flex}
+
+  /* 5 entrance keyframes */
+  .anim-ribbons{animation:introRibbons 1.45s cubic-bezier(.16,1,.3,1) forwards}
+  @keyframes introRibbons{0%{opacity:0;transform:scale(2.6);filter:blur(18px) brightness(2.5) drop-shadow(0 0 30px #e50914)}55%{opacity:1;transform:scale(.94);filter:blur(0) brightness(1.3) drop-shadow(0 0 28px rgba(229,9,20,.9))}78%{transform:scale(1.04)}100%{opacity:1;transform:scale(1);filter:drop-shadow(0 0 24px rgba(229,9,20,.65)) drop-shadow(0 0 48px rgba(255,42,109,.3))}}
+  .anim-console{animation:introConsole 1.25s steps(10,end) forwards}
+  @keyframes introConsole{0%{opacity:0;transform:translateY(-110px) scale(.6);filter:contrast(2) brightness(1.8)}40%{opacity:1;transform:translateY(14px) scale(1.06,.92)}65%{transform:translateY(-12px) scale(.96,1.04)}85%{transform:translateY(4px) scale(1.02,.98)}100%{opacity:1;transform:translateY(0) scale(1);filter:drop-shadow(0 0 20px rgba(0,245,212,.55))}}
+  .anim-glitch{animation:introGlitch 1.2s cubic-bezier(.25,1,.5,1) forwards}
+  @keyframes introGlitch{0%{opacity:0;transform:scale(.85) skewX(24deg);clip-path:inset(45% 0 45% 0);filter:drop-shadow(-14px 0 0 #00f5d4) drop-shadow(14px 0 0 #ff2a6d) brightness(2)}25%{opacity:1;transform:scale(1.05) skewX(-16deg) translateX(-10px);clip-path:inset(12% 0 18% 0);filter:drop-shadow(-10px 0 0 #00f5d4) drop-shadow(10px 0 0 #ff2a6d)}50%{transform:scale(.98) skewX(9deg) translateX(8px);clip-path:inset(0 0 0 0);filter:drop-shadow(6px 0 0 #00f5d4) drop-shadow(-6px 0 0 #e50914)}75%{transform:skewX(-4deg) translateX(-3px);filter:drop-shadow(-3px 0 0 #00f5d4) drop-shadow(3px 0 0 #ff2a6d)}100%{opacity:1;transform:scale(1) skewX(0) translateX(0);clip-path:inset(0 0 0 0);filter:drop-shadow(0 0 22px rgba(0,245,212,.5)) drop-shadow(0 0 36px rgba(255,42,109,.4))}}
+  .anim-warp{animation:introWarp 1.35s cubic-bezier(.19,1,.22,1) forwards}
+  @keyframes introWarp{0%{opacity:0;transform:scale(.08) rotate(-12deg);filter:blur(16px) brightness(3)}60%{opacity:1;transform:scale(1.12) rotate(2deg);filter:blur(0) brightness(1.4) drop-shadow(0 0 34px #00f5d4)}100%{opacity:1;transform:scale(1) rotate(0);filter:drop-shadow(0 0 24px rgba(0,245,212,.6)) drop-shadow(0 0 42px rgba(229,9,20,.45))}}
+  .anim-laser{animation:introLaser 1.3s ease-out forwards}
+  @keyframes introLaser{0%{opacity:0;transform:scale(.88);filter:brightness(3) drop-shadow(0 0 40px #ff2a6d) drop-shadow(0 0 40px #00f5d4)}45%{opacity:1;transform:scale(1.03);filter:brightness(1.5) drop-shadow(0 0 28px #ff2a6d)}100%{opacity:1;transform:scale(1);filter:brightness(1) drop-shadow(0 0 24px rgba(255,42,109,.65)) drop-shadow(0 0 36px rgba(0,245,212,.4))}}
+
+  /* ---- wordmark ---- */
+  #loader .wordmark-row{margin-top:28px;display:flex;align-items:baseline;justify-content:center;letter-spacing:-.025em}
+  @media (min-width:640px){ #loader .wordmark-row{margin-top:28px} }
+  .wordmark-char{display:inline-block;opacity:0;transform:translateY(22px) scale(.85);filter:blur(6px);transition:transform .5s cubic-bezier(.16,1,.3,1),opacity .4s ease,filter .4s ease}
+  .wordmark-char.visible{opacity:1;transform:translateY(0) scale(1);filter:blur(0)}
+  .wordmark-char.wm-px{font-family:'Silkscreen',monospace;font-weight:700;font-size:30px}
+  .wordmark-char.wm-sans{font-family:'Space Grotesk',sans-serif;font-weight:800;font-size:30px;margin-left:2px}
+  @media (min-width:640px){ .wordmark-char.wm-px,.wordmark-char.wm-sans{font-size:48px} }
+  @media (min-width:768px){ .wordmark-char.wm-px,.wordmark-char.wm-sans{font-size:60px} }
+  .wordmark-char.wm-red{color:#e50914}
+  #loader .laser-underline{height:3px;width:0%;max-width:340px;border-radius:9999px;margin-top:14px;background:linear-gradient(90deg,transparent,#00f5d4,#e50914,#ff2a6d,transparent);box-shadow:0 0 18px rgba(229,9,20,.85),0 0 28px rgba(0,245,212,.55);opacity:0;transition:width .85s cubic-bezier(.22,1,.36,1),opacity .35s ease}
+  #loader .laser-underline.expand{width:82vw;opacity:1}
+  #loader .boot-subtitle{margin-top:16px;font-family:'Silkscreen',monospace;font-size:10px;letter-spacing:.28em;text-transform:uppercase;color:#94a3b8;opacity:0;transition:opacity .7s}
+  @media (min-width:640px){ #loader .boot-subtitle{font-size:12px} }
+  #loader .boot-subtitle.opacity-100{opacity:1}
+
+  /* ---- bottom dock ---- */
+  #loader .cin-dock{position:relative;z-index:30;width:100%;padding:0 16px 20px;display:flex;flex-direction:column;align-items:center;gap:12px;transition:all .5s}
+  @media (min-width:640px){ #loader .cin-dock{padding:0 32px 28px} }
+  #loader .random-replay-btn{display:inline-flex;align-items:center;gap:10px;padding:12px 24px;border-radius:9999px;border:none;cursor:pointer;color:#fff;font-family:inherit;font-weight:700;font-size:12px;letter-spacing:.025em;background:linear-gradient(90deg,#e50914,#ff2a6d,#e50914);background-size:200% auto;box-shadow:0 10px 15px -3px rgba(229,9,20,.35);transition:all .3s}
+  @media (min-width:640px){ #loader .random-replay-btn{font-size:14px} }
+  #loader .random-replay-btn:hover{background-position:right}
+  #loader .random-replay-btn:active{transform:scale(.95)}
+  #loader .random-replay-btn svg{width:16px;height:16px;transition:transform .5s}
+  #loader .random-replay-btn:hover svg{transform:rotate(180deg)}
+  #loader .intro-pills{width:100%;max-width:768px;display:flex;align-items:center;justify-content:flex-start;gap:8px;overflow-x:auto;padding:4px;scrollbar-width:none}
+  @media (min-width:640px){ #loader .intro-pills{justify-content:center} }
+  #loader .intro-pills::-webkit-scrollbar{display:none}
+  #loader .intro-pill{flex-shrink:0;padding:6px 14px;border-radius:9999px;font-family:inherit;font-size:11px;font-weight:500;background:rgba(255,255,255,.05);color:#cbd5e1;border:1px solid rgba(255,255,255,.1);cursor:pointer;transition:all .2s;white-space:nowrap}
+  @media (min-width:640px){ #loader .intro-pill{font-size:12px} }
+  #loader .intro-pill:hover{background:rgba(255,255,255,.14)}
+  #loader .intro-pill:active{transform:scale(.95)}
+  #loader .intro-pill.current{background:#fff;color:#06060a;font-weight:700;border-color:#fff}
+</style>
 <style>
   #pixlect-login {
     background: linear-gradient(135deg, var(--accent), #5b8cff);
@@ -50,22 +154,84 @@ if ('serviceWorker' in navigator && window.isSecureContext) {
 <body>
 
 <div id="loader">
-  <div class="nb-stage" aria-hidden="true">
-    <div class="nb-ambient"></div>
-    <div class="nb-particles"></div>
-    <div class="nb-energy-ring"></div>
-    <div class="nb-laser"></div>
-    <div class="nb-laser nb-laser-two"></div>
-    <div class="nb-logo-container">
-      <img src="./logo.png" class="nb-boot-logo" alt="PIXELTube">
-    </div>
-    <div class="nb-scanlines"></div>
-    <div class="nb-flash"></div>
-    <div class="nb-ribbons"><i></i><i></i><i></i></div>
-    <div class="nb-word">
-      <b style="--i:0">P</b><span style="--i:1">I</span><span style="--i:2">X</span><span style="--i:3">E</span><span style="--i:4">L</span><span style="--i:5">T</span><span style="--i:6">u</span><span style="--i:7">b</span><span style="--i:8">e</span>
-    </div>
-    <div class="nb-mark"><span class="nb-p" data-px-char="P">P</span><span class="nb-colon" data-px-char=":">:</span></div>
+  <!-- Cinematic bootup experience — moved directly from test-bootup.html,
+       scoped under #loader so it never touches the app's own styles. -->
+  <div class="cin-stage">
+    <div class="pixel-grid-overlay"></div>
+    <div class="crt-scanlines"></div>
+    <canvas id="fx-canvas" class="fx-canvas"></canvas>
+    <div id="screen-flash" class="screen-flash"></div>
+
+    <header class="cin-hud">
+      <div class="seq-pill">
+        <span id="status-dot" class="status-dot"></span>
+        <span id="sequence-badge" class="sequence-badge">BOOT SEQUENCE // INITIALIZING</span>
+      </div>
+      <button id="audio-btn" class="audio-btn" type="button">
+        <span id="audio-icon" class="audio-icon">🔇</span>
+        <span id="audio-text">Click to Unmute / Replay with Sound</span>
+      </button>
+    </header>
+
+    <main class="cin-center">
+      <div id="emblem-box" class="emblem-box">
+        <div id="emblem-halo" class="emblem-halo"></div>
+        <img id="logo-img" src="logo.png" alt="PIXELTube Logo" class="logo-img" />
+        <div id="logo-svg-fallback" class="logo-svg-fallback">
+          <svg viewBox="0 0 128 128" style="width:100%;height:100%;overflow:visible" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="ptRedGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#ff2a6d" /><stop offset="48%" stop-color="#e50914" /><stop offset="100%" stop-color="#8c000c" />
+              </linearGradient>
+              <linearGradient id="ptBorderGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#00f5d4" /><stop offset="50%" stop-color="#ffffff" stop-opacity="0.6" /><stop offset="100%" stop-color="#ff2a6d" />
+              </linearGradient>
+            </defs>
+            <rect x="11" y="25" width="100" height="74" rx="18" fill="#00f5d4" opacity="0.55" />
+            <rect x="17" y="31" width="100" height="74" rx="18" fill="#ff2a6d" opacity="0.55" />
+            <rect x="14" y="28" width="100" height="74" rx="18" fill="url(#ptRedGrad)" stroke="url(#ptBorderGrad)" stroke-width="2.5" />
+            <rect x="102" y="15" width="9" height="9" rx="1.5" fill="#00f5d4" />
+            <rect x="114" y="22" width="6" height="6" rx="1" fill="#ff2a6d" />
+            <rect x="93" y="10" width="5" height="5" rx="1" fill="#ffffff" opacity="0.85" />
+            <rect x="13" y="106" width="8" height="8" rx="1.5" fill="#00f5d4" opacity="0.9" />
+            <rect x="6" y="98" width="5" height="5" rx="1" fill="#ff2a6d" />
+            <g fill="#ffffff">
+              <rect x="49" y="46" width="7" height="38" rx="1" /><rect x="56" y="50" width="7" height="30" rx="1" /><rect x="63" y="54" width="7" height="22" rx="1" /><rect x="70" y="58" width="7" height="14" rx="1" /><rect x="77" y="61" width="6" height="8" rx="1" />
+            </g>
+            <path d="M28 33 H100" stroke="#ffffff" stroke-opacity="0.4" stroke-width="2" stroke-linecap="round" />
+          </svg>
+        </div>
+      </div>
+
+      <div id="wordmark-row" class="wordmark-row" aria-label="PIXELTube">
+        <span class="wordmark-char wm-px" data-target="P">P</span>
+        <span class="wordmark-char wm-px" data-target="I">I</span>
+        <span class="wordmark-char wm-px" data-target="X">X</span>
+        <span class="wordmark-char wm-px" data-target="E">E</span>
+        <span class="wordmark-char wm-px wm-red" data-target="L">L</span>
+        <span class="wordmark-char wm-sans" data-target="T">T</span>
+        <span class="wordmark-char wm-sans" data-target="u">u</span>
+        <span class="wordmark-char wm-sans" data-target="b">b</span>
+        <span class="wordmark-char wm-sans" data-target="e">e</span>
+      </div>
+
+      <div id="laser-underline" class="laser-underline"></div>
+      <p id="boot-subtitle" class="boot-subtitle">NEXT-GEN PIXEL STREAMING ENGINE</p>
+    </main>
+
+    <footer id="control-dock" class="cin-dock">
+      <button id="random-replay-btn" class="random-replay-btn" type="button">
+        <svg fill="none" stroke="currentColor" stroke-width="2.4" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+        <span>Play Random Intro</span>
+      </button>
+      <div class="intro-pills">
+        <button data-intro="0" class="intro-pill" type="button">01 • Cinema Ribbons</button>
+        <button data-intro="1" class="intro-pill" type="button">02 • 8-Bit Console</button>
+        <button data-intro="2" class="intro-pill" type="button">03 • Cyber Glitch</button>
+        <button data-intro="3" class="intro-pill" type="button">04 • Warp Starfield</button>
+        <button data-intro="4" class="intro-pill" type="button">05 • Neon Laser Etch</button>
+      </div>
+    </footer>
   </div>
   <div class="boot-news" id="bootNews" hidden>
     <div class="boot-news-card">
@@ -83,12 +249,6 @@ if ('serviceWorker' in navigator && window.isSecureContext) {
       </div>
     </div>
   </div>
-  <div class="loader-foot">
-    <div class="nb-loading-text"><span id="nbLoadLabel">POWERING UP</span><span id="nbPercent">0%</span></div>
-    <div class="bar"><div class="nb-bar-fill" id="nbBarFill"></div></div>
-    <div class="status" id="loaderStatus">INITIALIZING PIXELTUBE</div>
-  </div>
-  <div class="nb-version">PIXELTUBE SYSTEM V1.1</div>
 </div>
 
 <header class="topbar">
@@ -141,6 +301,7 @@ if ('serviceWorker' in navigator && window.isSecureContext) {
 <div id="modalRoot"></div>
 
 <script src="./js/settings.js?v=101" defer></script>
+<script src="./js/boot-cinema.js?v=101" defer></script>
 <script src="./js/boot.js?v=101" defer></script>
 
 <script src="https://cdn.jsdelivr.net/npm/tus-js-client@4.1.0/dist/tus.min.js"></script>
