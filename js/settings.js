@@ -19,6 +19,22 @@
   const LS_THEME  = 'pixeltube-theme';
   const LS_ACCENT = 'pixeltube-accent';
   const LS_BOOT   = 'pixeltube-boot-enabled';
+  const LS_BOOT_STYLE = 'pixeltube-boot-style';
+
+  const BOOT_STYLES = [
+    { id: 'auto',    name: 'Auto (Cinema)',  hint: 'Cinematic intro on first load of the session, then Classic' },
+    { id: 'classic', name: 'Classic',        hint: 'Logo + progress bar' },
+    { id: 'random',  name: 'Random Cinema',  hint: 'Random cinematic intro each visit' },
+    { id: '0',       name: 'Cinema Ribbons', hint: 'Netflix-style dramatic swell' },
+    { id: '1',       name: '8-Bit Console',  hint: 'Arcade power-on drop' },
+    { id: '2',       name: 'Cyber Glitch',   hint: 'RGB chromatic snap' },
+    { id: '3',       name: 'Warp Starfield', hint: 'Hyperspace slam forward' },
+    { id: '4',       name: 'Neon Laser Etch',hint: 'Synthwave laser materialize' }
+  ];
+  const getBootStyle = () => {
+    try { return localStorage.getItem(LS_BOOT_STYLE) || 'auto'; }
+    catch (_) { return 'auto'; }
+  };
 
   const getFlag = (key, dflt) => {
     try { const v = localStorage.getItem(key); return v === null ? dflt : v === '1'; }
@@ -84,6 +100,18 @@
             </button>
           </div>
           <div class="settings-sub">Highlighted = the loading screen shows on the next visit.</div>
+          ${getFlag(LS_BOOT, true) ? `
+          <label class="settings-label" style="margin-top:10px">Custom bootup</label>
+          <div class="theme-grid">
+            ${BOOT_STYLES.map(s => `
+              <button class="theme-swatch ${s.id === getBootStyle() ? 'active' : ''}" data-settings-boot-style="${s.id}" type="button" title="${s.hint}">
+                <span class="dot" style="background:${s.id === 'classic' ? '#9CA3AF' : s.id === 'random' ? 'linear-gradient(135deg,#e50914,#00f5d4)' : '#e50914'}"></span>
+                <span>${s.name}</span>
+              </button>
+            `).join('')}
+          </div>
+          <div class="settings-sub">Pick the intro that plays on the next page load. Cinema styles play inline on the loading screen (with sound — click anywhere to skip).</div>
+          ` : ''}
         </div>
 
         <div class="settings-actions">
@@ -141,9 +169,17 @@
       return;
     }
 
+    const bootStyleBtn = e.target.closest('[data-settings-boot-style]');
+    if (bootStyleBtn) {
+      try { localStorage.setItem(LS_BOOT_STYLE, bootStyleBtn.dataset.settingsBootStyle); } catch (_) {}
+      refreshPanel();
+      return;
+    }
+
     if (e.target.closest('[data-settings-reset]')) {
       applyTheme('dark');
       applyAccent('midnight');
+      try { localStorage.setItem(LS_BOOT_STYLE, 'auto'); } catch (_) {}
       syncThemeToggleLabel();
       refreshPanel();
     }
