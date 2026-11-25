@@ -1390,7 +1390,7 @@ function render(force = false) {
 
   if      (page === 'home')      view.innerHTML = viewFeed(CTX);
   else if (page === 'longs')     view.innerHTML = viewLongs(CTX);
-  else if (page === 'minis')     view.innerHTML = viewMinis(CTX);
+  else if (page === 'minis')     { view.innerHTML = viewMinis(CTX); hydrateVideosInView(view); setupMinis(CTX); }
   else if (page === 'mini')      {
     view.innerHTML = viewMiniViewer(CTX, arg);
     setupMinis(CTX);
@@ -1711,13 +1711,106 @@ function setupCommentForm(ctx, vid) {
   }
 }
 
+/* ============================================================
+   MINIS FEED RANKING — personalizes the vertical scroll feed
+   like YouTube Shorts: liked videos, subscribed channels and
+   your search history all push matching Minis to the top.
+   ============================================================ */
+const MINI_FEED_BATCH = 5;
+let minisLoaded = 0;
+let minisLoading = false;
+let minisScrollHandler = null;
+
+function miniFeedTokens() {
+  const map = new Map();
+  try {
+    const hist = JSON.parse(localStorage.getItem('pixeltube_search_history') || '[]');
+    hist.forEach((h, i) => {
+      const w = Math.max(1, 20 - i);
+      String(h.q || h || '').toLowerCase().split(/\s+/).filter(t => t.length >= 2)
+        .forEach(t => map.set(t, (map.get(t) || 0) + w));
+    });
+  } catch (e) {}
+  return map;
+}
+
+function rankMinis(ctx) {
+  const { state, chanOf, minisSorted } = ctx;
+  const tokens = miniFeedTokens();
+  return minisSorted()
+    .map(v => {
+      const c = chanOf(v.id) || {};
+      const title = String(v.title || '').toLowerCase();
+      const desc = String(v.desc || '').toLowerCase();
+      const chan = String(c.name || '').toLowerCase();
+      let s = 0;
+      tokens.forEach((w, tok) => {
+        if (title.includes(tok)) s += 6 * w;
+        if (desc.includes(tok))  s += 3 * w;
+        if (chan.includes(tok))  s += 4 * w;
+      });
+      /* Things you liked / subscribed to come first — that's the Shorts signal */
+      if (state.likes && state.likes[v.id]) s += 40;
+      if (state.subs && state.subs[v.channelId]) s += 25;
+      if (state.dislikes && state.dislikes[v.id]) s -= 60;
+      /* Engagement + freshness as tiebreaker */
+      s += Math.min(10, (Number(v.likes) || 0) / 5) + Math.min(5, (Number(v.views) || 0) / 1000);
+      const ageDays = (Date.now() - (v.createdAt || 0)) / 86400000;
+      s += Math.max(0, 3 - ageDays * 0.1);
+      return { v, s };
+    })
+    .sort((a, b) => b.s - a.s)
+    .map(x => x.v);
+}
+
 function viewMinis(ctx) {
-  const { minisSorted, emptyState, hasChannel, PIXLECT } = ctx;
-  const list = minisSorted();
-  if (!list.length) {
+  const { emptyState, hasChannel, PIXLECT, minisSorted } = ctx;
+  const all = minisSorted();
+  if (!all.length) {
     return emptyState('⚡', 'No Minis yet', PIXLECT.user ? (hasChannel() ? 'Upload a Mini to fill this feed.' : 'Create your channel to upload Minis.') : 'Sign in with PIXLECT to upload Minis.', PIXLECT.user ? (hasChannel() ? `<a class="btn-ghost" href="#/create">Upload a Mini</a>` : `<button class="btn-primary" id="emptyCreateChannel" type="button">Create your PIXELChannel</button>`) : `<button class="btn-primary" onclick="window.dispatchEvent(new Event('pixeltube:signin'))" type="button">Sign in with PIXLECT</button>`);
   }
-  return `<div class="page-head"><h1>Minis</h1><p>${list.length} Mini${list.length === 1 ? '' : 's'}</p></div><div class="shorts-grid">${list.map(shortCardHTML).join('')}</div>`;
+
+  const list = rankMinis(ctx);
+  minisLoaded = 0;
+  minisLoading = false;
+  const first = list.slice(0, MINI_FEED_BATCH);
+  minisLoaded = first.length;
+  const hasMore = list.length > minisLoaded;
+
+  queueMicrotask(() => attachMinisFeedLoader(ctx, list));
+
+  return `${first.map(v => miniSectionHTML(v, ctx, false)).join('')}${hasMore ? '<div id="minisSentinel" style="height:1px"></div>' : ''}`;
+}
+
+function attachMinisFeedLoader(ctx, list) {
+  const view = $('#view');
+  if (!view) return;
+  if (minisScrollHandler) {
+    view.removeEventListener('scroll', minisScrollHandler);
+    window.removeEventListener('scroll', minisScrollHandler);
+    minisScrollHandler = null;
+  }
+  const onScroll = () => {
+    if (minisLoading || !document.getElementById('minisSentinel')) return;
+    if (minisLoaded >= list.length) return;
+    const remaining = view.scrollHeight - view.scrollTop - view.clientHeight;
+    if (remaining > view.clientHeight * 2) return;
+    minisLoading = true;
+    const next = list.slice(minisLoaded, minisLoaded + MINI_FEED_BATCH);
+    const sentinel = document.getElementById('minisSentinel');
+    if (!sentinel || !next.length) { minisLoading = false; return; }
+    sentinel.insertAdjacentHTML('beforebegin', next.map(v => miniSectionHTML(v, ctx, false)).join(''));
+    minisLoaded += next.length;
+    if (minisLoaded >= list.length) sentinel.remove();
+    hydrateVideosInView(view);
+    setupMinis(ctx);
+    syncDynamic();
+    minisLoading = false;
+  };
+  view.addEventListener('scroll', onScroll, { passive: true });
+  window.addEventListener('scroll', onScroll, { passive: true });
+  minisScrollHandler = onScroll;
+  onScroll();
 }
 
 function viewMiniViewer(ctx, currentVid) {
