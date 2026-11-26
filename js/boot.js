@@ -19,7 +19,7 @@
 
   /* Safety net: never hang the user on the loading screen. */
   const MAX_MS = 4000;
-  const CINEMA_MAX_MS = 5000;
+  const CINEMA_MAX_MS = 6500;
 
   const flag = (key, dflt) => {
     try { const v = localStorage.getItem(key); return v === null ? dflt : v === '1'; }

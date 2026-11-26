@@ -67,6 +67,7 @@
           case 2: this.soundCyberGlitch(now); break;
           case 3: this.soundWarpStarfield(now); break;
           case 4: this.soundNeonLaserEtch(now); break;
+          case 5: this.soundRetroInvasion(now); break;
         }
       } catch (e) { console.warn('Audio playback skipped:', e); }
     }
@@ -240,17 +241,68 @@
         osc.stop(now + 2.75);
       });
     }
+    soundRetroInvasion(now) {
+      /* Ported from test_bootups/bootup1.html — arcade power-on + laser
+         defense sweeps + final sub-bass restore hit. */
+      const arp = [130.81, 164.81, 196.00, 246.94, 293.66];
+      arp.forEach((freq, idx) => {
+        const t = now + 0.1 + idx * 0.11;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(freq, t);
+        gain.gain.setValueAtTime(0.001, t);
+        gain.gain.linearRampToValueAtTime(0.06, t + 0.012);
+        gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.2);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(t);
+        osc.stop(t + 0.22);
+      });
+      /* 4 laser sweeps */
+      [0.9, 1.3, 1.7, 2.1].forEach((st) => {
+        const t = now + st;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(1600, t);
+        osc.frequency.exponentialRampToValueAtTime(220, t + 0.4);
+        gain.gain.setValueAtTime(0.001, t);
+        gain.gain.linearRampToValueAtTime(0.09, t + 0.05);
+        gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.45);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(t);
+        osc.stop(t + 0.5);
+      });
+      /* final restore sub-bass */
+      const sub = this.ctx.createOscillator();
+      const sGain = this.ctx.createGain();
+      sub.type = 'sine';
+      sub.frequency.setValueAtTime(110, now + 2.55);
+      sub.frequency.exponentialRampToValueAtTime(40, now + 3.2);
+      sGain.gain.setValueAtTime(0.001, now + 2.55);
+      sGain.gain.linearRampToValueAtTime(0.5, now + 2.62);
+      sGain.gain.exponentialRampToValueAtTime(0.0001, now + 3.35);
+      sub.connect(sGain);
+      sGain.connect(this.ctx.destination);
+      sub.start(now + 2.55);
+      sub.stop(now + 3.4);
+    }
   }
 
   const soundEngine = new PixelBootAudio();
 
-  /* ---------- intro definitions ---------- */
+  /* ---------- intro definitions ----------
+   NOTE: no "BOOT SEQUENCE // ..." prefix — the HUD badge shows only
+   the intro name so nothing noisy is printed on screen. */
   const INTROS = [
-    { id: 0, code: '01: CINEMA RIBBONS', subtitle: 'ULTRA-HIGH DEFINITION PIXEL CINEMA', animClass: 'anim-ribbons', emblemDelay: 420, wordmarkDelay: 920, underlineDelay: 1450, flashAt: 440 },
-    { id: 1, code: '02: 8-BIT CONSOLE POWER-ON', subtitle: 'INSERT CARTRIDGE // 60FPS ARCADE ENGINE', animClass: 'anim-console', emblemDelay: 480, wordmarkDelay: 950, underlineDelay: 1480, flashAt: 160 },
-    { id: 2, code: '03: CYBER GLITCH MATRIX', subtitle: 'NEURAL STREAM PROTOCOL // ONLINE', animClass: 'anim-glitch', emblemDelay: 450, wordmarkDelay: 880, underlineDelay: 1420, flashAt: 460 },
-    { id: 3, code: '04: WARP SPEED STARFIELD', subtitle: 'HYPERSPACE OPTICAL TRANSMISSION', animClass: 'anim-warp', emblemDelay: 880, wordmarkDelay: 1250, underlineDelay: 1700, flashAt: 900 },
-    { id: 4, code: '05: NEON LASER ETCH', subtitle: 'SYNTHWAVE VECTOR PROJECTION', animClass: 'anim-laser', emblemDelay: 680, wordmarkDelay: 1120, underlineDelay: 1600, flashAt: 700 },
+    { id: 0, code: 'CINEMA RIBBONS', subtitle: 'ULTRA-HIGH DEFINITION PIXEL CINEMA', animClass: 'anim-ribbons', emblemDelay: 420, wordmarkDelay: 920, underlineDelay: 1450, flashAt: 440 },
+    { id: 1, code: '8-BIT CONSOLE POWER-ON', subtitle: 'INSERT CARTRIDGE // 60FPS ARCADE ENGINE', animClass: 'anim-console', emblemDelay: 480, wordmarkDelay: 950, underlineDelay: 1480, flashAt: 160 },
+    { id: 2, code: 'CYBER GLITCH MATRIX', subtitle: 'NEURAL STREAM PROTOCOL // ONLINE', animClass: 'anim-glitch', emblemDelay: 450, wordmarkDelay: 880, underlineDelay: 1420, flashAt: 460 },
+    { id: 3, code: 'WARP SPEED STARFIELD', subtitle: 'HYPERSPACE OPTICAL TRANSMISSION', animClass: 'anim-warp', emblemDelay: 880, wordmarkDelay: 1250, underlineDelay: 1700, flashAt: 900 },
+    { id: 4, code: 'NEON LASER ETCH', subtitle: 'SYNTHWAVE VECTOR PROJECTION', animClass: 'anim-laser', emblemDelay: 680, wordmarkDelay: 1120, underlineDelay: 1600, flashAt: 700 },
+    { id: 5, code: 'RETRO INVASION', subtitle: 'PIXEL DEFENSE SYSTEM ONLINE', animClass: 'anim-invasion', emblemDelay: 700, wordmarkDelay: 1300, underlineDelay: 1900, flashAt: 2600 },
   ];
 
   /* ---------- canvas FX engines ---------- */
@@ -491,6 +543,84 @@
         rafId = requestAnimationFrame(loop);
       };
       rafId = requestAnimationFrame(loop);
+
+    } else if (introIndex === 5) {
+      /* RETRO INVASION — ported from test_bootups/bootup1.html.
+         Pixel enemies swarm the logo, laser defenses fire, and the
+         system is restored. Runs for ~2.4s alongside the emblem anim. */
+      const attackers = Array.from({ length: 40 }, (_, i) => ({
+        born: 200 + i * 65,
+        duration: 700 + Math.random() * 500,
+        sx: Math.random() * w(),
+        sy: Math.random() < 0.5 ? -20 : h() + 20,
+        tx: w() / 2 + (Math.random() - 0.5) * 440,
+        ty: h() / 2 + (Math.random() - 0.5) * 300,
+        size: 8 + Math.random() * 8,
+      }));
+      const blasts = [];
+      let fired = 0;
+      const loop = (now) => {
+        const elapsed = (now - startTime) / 1000;
+        ctx.clearRect(0, 0, w(), h());
+        attackers.forEach((a) => {
+          const t = (elapsed * 1000 - a.born) / a.duration;
+          if (t < 0 || t > 1) return;
+          const x = a.sx + (a.tx - a.sx) * t;
+          const y = a.sy + (a.ty - a.sy) * t;
+          ctx.save();
+          ctx.globalAlpha = t < 0.15 ? t / 0.15 : (t > 0.8 ? (1 - t) / 0.2 : 1);
+          ctx.fillStyle = '#ff003c';
+          ctx.shadowColor = '#ff003c';
+          ctx.shadowBlur = 12;
+          ctx.fillRect(x - a.size / 2, y - a.size / 2, a.size, a.size);
+          ctx.restore();
+        });
+        /* laser sweeps at ~0.9s, 1.3s, 1.7s, 2.1s */
+        const sweepTimes = [0.9, 1.3, 1.7, 2.1];
+        sweepTimes.forEach((st, i) => {
+          const lt = (elapsed - st) / 0.45;
+          if (lt < 0 || lt > 1) return;
+          if (i + 1 > fired) {
+            fired = i + 1;
+            blasts.push({ x: w() / 2, y: h() / 2, t0: elapsed });
+            blasts.push({ x: w() / 2, y: h() / 2, t0: elapsed });
+          }
+          const y = h() * (0.35 + i * 0.1);
+          const x = -w() * 0.3 + lt * w() * 1.6;
+          ctx.save();
+          const grad = ctx.createLinearGradient(x - 120, 0, x + 120, 0);
+          grad.addColorStop(0, 'transparent');
+          grad.addColorStop(0.5, '#ff003c');
+          grad.addColorStop(0.52, '#ffffff');
+          grad.addColorStop(0.54, '#ff003c');
+          grad.addColorStop(1, 'transparent');
+          ctx.fillStyle = grad;
+          ctx.shadowColor = 'red';
+          ctx.shadowBlur = 30;
+          ctx.fillRect(x - 120, y, 240, 3);
+          ctx.restore();
+        });
+        /* explosions */
+        for (let i = blasts.length - 1; i >= 0; i--) {
+          const b = blasts[i];
+          const bt = elapsed - b.t0;
+          if (bt > 0.55) { blasts.splice(i, 1); continue; }
+          const p = bt / 0.55;
+          ctx.save();
+          ctx.globalAlpha = 1 - p;
+          for (let j = 0; j < 8; j++) {
+            const ang = (j / 8) * Math.PI * 2 + i;
+            const d = p * 90;
+            ctx.fillStyle = '#ffffff';
+            ctx.shadowColor = 'red';
+            ctx.shadowBlur = 10;
+            ctx.fillRect(b.x + Math.cos(ang) * d, b.y + Math.sin(ang) * d, 7, 7);
+          }
+          ctx.restore();
+        }
+        rafId = requestAnimationFrame(loop);
+      };
+      rafId = requestAnimationFrame(loop);
     }
   }
 
@@ -542,7 +672,7 @@
     const underlineEl = document.getElementById('laser-underline');
     const chars = Array.from(document.querySelectorAll('#loader .wordmark-char'));
 
-    badgeEl.textContent = `BOOT SEQUENCE // ${config.code}`;
+    badgeEl.textContent = config.code;
     subtitleEl.textContent = config.subtitle;
 
     document.querySelectorAll('#loader .intro-pill').forEach((pill) => {
@@ -551,7 +681,7 @@
 
     /* reset */
     emblemBox.className = 'emblem-box';
-    emblemBox.classList.remove('anim-ribbons', 'anim-console', 'anim-glitch', 'anim-warp', 'anim-laser');
+    emblemBox.classList.remove('anim-ribbons', 'anim-console', 'anim-glitch', 'anim-warp', 'anim-laser', 'anim-invasion');
     if (emblemHalo) emblemHalo.classList.remove('active');
     if (underlineEl) underlineEl.classList.remove('expand');
     if (subtitleEl) { subtitleEl.classList.remove('opacity-100'); }

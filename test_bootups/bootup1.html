@@ -1,0 +1,502 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PIXELTube - Retro Boot</title>
+
+<style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background: #000;
+    overflow: hidden;
+    font-family: monospace;
+    color: white;
+}
+
+#boot {
+    position: fixed;
+    inset: 0;
+    background:
+        radial-gradient(circle, #19000b 0%, #080008 45%, #000 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    z-index: 10;
+    transition: opacity 1s;
+}
+
+#boot.exit {
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* CRT EFFECT */
+
+.crt {
+    position: absolute;
+    inset: 0;
+    z-index: 20;
+    pointer-events: none;
+    background: repeating-linear-gradient(
+        transparent 0px,
+        transparent 3px,
+        rgba(255,255,255,.045) 4px
+    );
+}
+
+.crt::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(
+        ellipse,
+        transparent 40%,
+        rgba(0,0,0,.8) 100%
+    );
+}
+
+/* RETRO GRID */
+
+.grid {
+    position: absolute;
+    bottom: -40%;
+    width: 200%;
+    height: 75%;
+    left: -50%;
+    background-image:
+        linear-gradient(#ff003c44 1px, transparent 1px),
+        linear-gradient(90deg, #ff003c44 1px, transparent 1px);
+    background-size: 50px 35px;
+    transform: perspective(220px) rotateX(60deg);
+    animation: gridMove 1.5s linear infinite;
+    opacity: .45;
+}
+
+@keyframes gridMove {
+    to { background-position: 0 35px; }
+}
+
+/* LOGO */
+
+.logo-area {
+    position: relative;
+    width: min(70vw, 560px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 5;
+}
+
+#logo {
+    width: 100%;
+    height: auto;
+    object-fit: contain;
+    opacity: 0;
+    filter: drop-shadow(0 0 20px #ff002f);
+    transform: scale(.3);
+    transition: filter .2s;
+}
+
+#logo.appear {
+    animation: logoAppear 1s cubic-bezier(.16,1,.3,1) forwards;
+}
+
+@keyframes logoAppear {
+    0% {
+        opacity: 0;
+        transform: scale(.3) rotate(-12deg);
+        filter: blur(15px);
+    }
+    70% {
+        opacity: 1;
+        transform: scale(1.12);
+        filter: blur(0) drop-shadow(0 0 35px red);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* PIXEL ATTACKS */
+
+.pixel {
+    position: absolute;
+    width: 13px;
+    height: 13px;
+    background: #ff003c;
+    box-shadow: 0 0 12px #ff003c;
+    z-index: 8;
+    pointer-events: none;
+    animation: attack var(--duration) linear forwards;
+}
+
+@keyframes attack {
+    0% {
+        opacity: 0;
+        transform: translate(var(--startX), var(--startY)) scale(2);
+    }
+    15% { opacity: 1; }
+    75% { opacity: 1; }
+    100% {
+        opacity: 0;
+        transform: translate(var(--endX), var(--endY)) scale(.3);
+    }
+}
+
+/* PIXEL EXPLOSIONS */
+
+.explosion {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    background: white;
+    box-shadow: 0 0 12px red;
+    z-index: 9;
+    pointer-events: none;
+    animation: explode .55s ease-out forwards;
+}
+
+@keyframes explode {
+    0% {
+        transform: translate(0,0) scale(1);
+        opacity: 1;
+    }
+    100% {
+        transform: translate(var(--dx),var(--dy)) scale(0);
+        opacity: 0;
+    }
+}
+
+/* LASER */
+
+.laser {
+    position: absolute;
+    height: 3px;
+    width: 120%;
+    left: -130%;
+    background: linear-gradient(
+        90deg, transparent, #ff003c, white, #ff003c, transparent
+    );
+    box-shadow: 0 0 20px red, 0 0 50px red;
+    z-index: 7;
+    pointer-events: none;
+}
+
+.laser.fire {
+    animation: laserFire .45s ease-out forwards;
+}
+
+@keyframes laserFire {
+    to { left: 130%; }
+}
+
+/* GLITCH */
+
+#boot.glitching .logo-area {
+    animation: glitch .12s steps(2) infinite;
+}
+
+@keyframes glitch {
+    0% { transform: translate(0); filter: none; }
+    25% { transform: translate(8px,-3px); filter: hue-rotate(70deg); }
+    50% { transform: translate(-7px,3px); filter: contrast(2); }
+    75% { transform: translate(4px,2px); }
+    100% { transform: translate(0); }
+}
+
+.flash {
+    position: absolute;
+    inset: 0;
+    background: white;
+    opacity: 0;
+    z-index: 15;
+    pointer-events: none;
+}
+
+.flash.hit {
+    animation: flashHit .2s ease-out;
+}
+
+@keyframes flashHit {
+    0% { opacity: .8; }
+    100% { opacity: 0; }
+}
+
+/* STATUS */
+
+.status {
+    position: absolute;
+    bottom: 13%;
+    width: 100%;
+    text-align: center;
+    color: #ff315b;
+    font-size: 12px;
+    letter-spacing: 4px;
+    z-index: 25;
+    text-shadow: 0 0 10px red;
+}
+
+.progress {
+    width: 200px;
+    height: 4px;
+    background: #33000c;
+    margin: 15px auto;
+}
+
+#bar {
+    height: 100%;
+    width: 0%;
+    background: #ff003c;
+    box-shadow: 0 0 15px red;
+}
+
+.percent {
+    font-size: 10px;
+    color: #888;
+    letter-spacing: 3px;
+}
+
+/* FINAL HOME */
+
+.home {
+    position: fixed;
+    inset: 0;
+    background: #080808;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 1s;
+}
+
+.home.show {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+nav {
+    display: flex;
+    align-items: center;
+    padding: 15px 5%;
+    gap: 30px;
+}
+
+nav img {
+    width: 130px;
+    height: 55px;
+    object-fit: contain;
+}
+
+nav a {
+    color: white;
+    text-decoration: none;
+}
+
+.hero {
+    padding: 120px 7%;
+    background: linear-gradient(90deg,#100006,#33000b,#080808);
+}
+
+.hero h1 {
+    font-size: clamp(35px,7vw,70px);
+}
+
+.hero p {
+    color: #aaa;
+    margin-top: 15px;
+}
+
+@media(max-width:600px) {
+    .logo-area { width: 85vw; }
+    .status { font-size: 9px; }
+}
+</style>
+</head>
+
+<body>
+
+<div id="boot">
+
+    <div class="grid"></div>
+
+    <div class="logo-area">
+        <img id="logo" src="logo.png" alt="PIXELTube Logo">
+    </div>
+
+    <div id="effects"></div>
+
+    <div class="laser" id="laser"></div>
+    <div class="flash" id="flash"></div>
+
+    <div class="status">
+        <div id="message">CONNECTING TO RETRO SYSTEM...</div>
+        <div class="progress">
+            <div id="bar"></div>
+        </div>
+        <div class="percent" id="percent">0%</div>
+    </div>
+
+    <div class="crt"></div>
+</div>
+
+<div class="home" id="home">
+    <nav>
+        <img src="logo.png" alt="PIXELTube">
+        <a href="#">Home</a>
+        <a href="#">Trending</a>
+        <a href="#">Gaming</a>
+        <a href="#">Movies</a>
+    </nav>
+
+    <section class="hero">
+        <h1>WELCOME TO PIXELTube</h1>
+        <p>Your entertainment universe starts here.</p>
+    </section>
+</div>
+
+<script>
+const boot = document.getElementById("boot");
+const logo = document.getElementById("logo");
+const effects = document.getElementById("effects");
+const laser = document.getElementById("laser");
+const flash = document.getElementById("flash");
+const message = document.getElementById("message");
+const bar = document.getElementById("bar");
+const percent = document.getElementById("percent");
+const home = document.getElementById("home");
+
+const sleep = ms =>
+    new Promise(resolve => setTimeout(resolve, ms));
+
+function makeExplosion(x, y) {
+    for (let i = 0; i < 18; i++) {
+        const p = document.createElement("div");
+        p.className = "explosion";
+        p.style.left = x + "px";
+        p.style.top = y + "px";
+        p.style.setProperty("--dx", (Math.random()-0.5)*160 + "px");
+        p.style.setProperty("--dy", (Math.random()-0.5)*160 + "px");
+
+        effects.appendChild(p);
+        setTimeout(() => p.remove(), 600);
+    }
+}
+
+function makeAttack() {
+    const p = document.createElement("div");
+    p.className = "pixel";
+
+    const side = Math.floor(Math.random()*4);
+    let sx, sy;
+
+    if (side === 0) {
+        sx = Math.random()*innerWidth;
+        sy = -20;
+    } else if (side === 1) {
+        sx = innerWidth+20;
+        sy = Math.random()*innerHeight;
+    } else if (side === 2) {
+        sx = Math.random()*innerWidth;
+        sy = innerHeight+20;
+    } else {
+        sx = -20;
+        sy = Math.random()*innerHeight;
+    }
+
+    const tx = innerWidth/2 + (Math.random()-.5)*220;
+    const ty = innerHeight/2 + (Math.random()-.5)*150;
+
+    p.style.left = "0px";
+    p.style.top = "0px";
+    p.style.setProperty("--startX", sx+"px");
+    p.style.setProperty("--startY", sy+"px");
+    p.style.setProperty("--endX", tx+"px");
+    p.style.setProperty("--endY", ty+"px");
+    p.style.setProperty("--duration", (.5+Math.random()*.6)+"s");
+
+    effects.appendChild(p);
+    setTimeout(() => p.remove(), 1200);
+}
+
+async function startBoot() {
+
+    // Phase 1: Retro system startup
+    message.textContent = "RETRO INVASION DETECTED";
+    await sleep(500);
+
+    // Phase 2: Reveal logo
+    logo.classList.add("appear");
+    await sleep(1200);
+
+    // Phase 3: Attack the logo
+    message.textContent = "PIXEL ENEMIES ATTACKING!";
+
+    boot.classList.add("glitching");
+
+    for (let i = 0; i < 40; i++) {
+        makeAttack();
+        await sleep(65);
+    }
+
+    // Phase 4: Laser attacks
+    message.textContent = "DEFENDING PIXELTUBE...";
+
+    for (let i = 0; i < 4; i++) {
+        laser.style.top = (35+i*10)+"%";
+        laser.classList.remove("fire");
+        void laser.offsetWidth;
+        laser.classList.add("fire");
+
+        flash.classList.remove("hit");
+        void flash.offsetWidth;
+        flash.classList.add("hit");
+
+        makeExplosion(innerWidth/2, innerHeight/2);
+
+        await sleep(400);
+    }
+
+    // Phase 5: Final glitch explosion
+    message.textContent = "FINAL PIXEL STRIKE!";
+    await sleep(300);
+
+    makeExplosion(innerWidth/2, innerHeight/2);
+
+    boot.classList.remove("glitching");
+    boot.classList.add("glitching");
+
+    await sleep(350);
+
+    boot.classList.remove("glitching");
+    logo.style.filter = "drop-shadow(0 0 35px red) brightness(1.2)";
+
+    message.textContent = "PIXELTUBE SYSTEM RESTORED";
+
+    // Phase 6: Loading completion
+    for (let i = 0; i <= 100; i++) {
+        bar.style.width = i+"%";
+        percent.textContent = i+"%";
+        await sleep(15);
+    }
+
+    message.textContent = "WELCOME TO PIXELTUBE";
+
+    await sleep(1000);
+
+    // Phase 7: Home reveal
+    boot.classList.add("exit");
+    home.classList.add("show");
+}
+
+window.addEventListener("load", startBoot);
+</script>
+
+</body>
+</html>

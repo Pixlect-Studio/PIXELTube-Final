@@ -106,6 +106,9 @@ if ('serviceWorker' in navigator && window.isSecureContext) {
   #loader .anim-warp{animation:introWarp 1.35s cubic-bezier(.19,1,.22,1) forwards}
   @keyframes introWarp{0%{opacity:0;transform:scale(.08) rotate(-12deg);filter:blur(16px) brightness(3)}60%{opacity:1;transform:scale(1.12) rotate(2deg);filter:blur(0) brightness(1.4) drop-shadow(0 0 34px #00f5d4)}100%{opacity:1;transform:scale(1) rotate(0);filter:drop-shadow(0 0 24px rgba(0,245,212,.6)) drop-shadow(0 0 42px rgba(229,9,20,.45))}}
   #loader .anim-laser{animation:introLaser 1.3s ease-out forwards}
+  /* RETRO INVASION emblem — glitchy slam from bootup1 */
+  #loader .anim-invasion{animation:introInvasion 1.35s cubic-bezier(.16,1,.3,1) forwards}
+  @keyframes introInvasion{0%{opacity:0;transform:scale(.25) rotate(-14deg);filter:blur(16px) brightness(3) drop-shadow(0 0 34px #ff003c)}35%{opacity:1;transform:scale(1.16) rotate(6deg);filter:blur(0) brightness(1.5) drop-shadow(0 0 30px #ff003c)}52%{transform:scale(.93) rotate(-3deg) translate(10px,-4px)}68%{transform:scale(1.06) rotate(2deg) translate(-7px,3px);filter:hue-rotate(35deg) drop-shadow(0 0 26px #ff003c)}82%{transform:scale(.98) rotate(-1deg) translate(4px,-2px)}100%{opacity:1;transform:scale(1) rotate(0);filter:drop-shadow(0 0 26px rgba(255,0,60,.7)) drop-shadow(0 0 44px rgba(255,42,109,.4))}}
   @keyframes introLaser{0%{opacity:0;transform:scale(.88);filter:brightness(3) drop-shadow(0 0 40px #ff2a6d) drop-shadow(0 0 40px #00f5d4)}45%{opacity:1;transform:scale(1.03);filter:brightness(1.5) drop-shadow(0 0 28px #ff2a6d)}100%{opacity:1;transform:scale(1);filter:brightness(1) drop-shadow(0 0 24px rgba(255,42,109,.65)) drop-shadow(0 0 36px rgba(0,245,212,.4))}}
   #loader .wordmark-row{margin-top:24px;display:flex;align-items:baseline;justify-content:center;letter-spacing:-.025em}
   #loader .wordmark-char{display:inline-block;opacity:0;transform:translateY(22px) scale(.85);filter:blur(6px);font-size:30px;font-weight:700;font-family:'Silkscreen',monospace;color:#fff;transition:transform .5s cubic-bezier(.16,1,.3,1),opacity .4s ease,filter .4s ease}
@@ -175,7 +178,7 @@ if ('serviceWorker' in navigator && window.isSecureContext) {
     <div class="cinema-hud">
       <div class="cinema-pill">
         <span id="status-dot"></span>
-        <span id="sequence-badge">BOOT SEQUENCE // INITIALIZING</span>
+        <span id="sequence-badge">INITIALIZING</span>
       </div>
       <button id="audio-btn" class="cinema-audio" type="button">
         <span id="audio-icon">🔇</span>

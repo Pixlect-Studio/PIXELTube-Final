@@ -978,7 +978,26 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
   width:22px;height:22px;border-radius:50%;flex:none;
   box-shadow:inset 0 0 0 2px rgba(255,255,255,.25);
 }
-.theme-swatch span{font-size:10.5px;font-weight:700;color:var(--text);white-space:nowrap}
+.theme-swatch span{font-size:10.5px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+
+/* ---- settings live preview ---- */
+.settings-preview{border-radius:12px;overflow:hidden;border:1px solid var(--line);background:var(--surface);user-select:none;pointer-events:none}
+.settings-preview .sp-topbar{display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--surface2);border-bottom:1px solid var(--line)}
+.settings-preview .sp-topbar .sp-dot{width:9px;height:9px;border-radius:50%;background:var(--accent);box-shadow:0 0 8px color-mix(in srgb,var(--accent) 60%,transparent)}
+.settings-preview .sp-topbar .sp-bar{flex:1;height:10px;border-radius:6px;background:var(--surface)}
+.settings-preview .sp-topbar .sp-chip{width:36px;height:14px;border-radius:999px;background:var(--accent)}
+.settings-preview .sp-body{display:flex;gap:8px;padding:10px}
+.settings-preview .sp-card{flex:1;border-radius:8px;background:var(--surface2);padding:6px}
+.settings-preview .sp-thumb{height:34px;border-radius:6px;background:color-mix(in srgb,var(--accent) 22%,var(--surface))}
+.settings-preview .sp-lines{margin-top:6px;display:flex;flex-direction:column;gap:4px}
+.settings-preview .sp-lines span{height:5px;border-radius:3px;background:var(--line)}
+.settings-preview .sp-lines span:first-child{width:80%;background:color-mix(in srgb,var(--accent) 40%,var(--line))}
+.settings-preview[data-theme="light"]{background:#fff}
+.settings-preview[data-theme="light"] .sp-topbar{background:#f1f5f9}
+.settings-preview[data-theme="light"] .sp-topbar .sp-bar{background:#e2e8f0}
+.settings-preview[data-theme="light"] .sp-card{background:#f8fafc}
+.settings-preview[data-theme="light"] .sp-thumb{background:color-mix(in srgb,var(--accent) 25%,#eef2f7)}
+.settings-preview[data-theme="light"] .sp-lines span{background:#e2e8f0}
 .mode-row{display:flex;gap:8px}
 .mode-btn{
   flex:1;padding:9px 0;border-radius:10px;border:1px solid var(--line);

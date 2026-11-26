@@ -89,6 +89,7 @@ export function promptCreateChannel(ctx) {
     <div class="field">
       <label for="chName">Channel name *</label>
       <input id="chName" type="text" maxlength="60" value="${esc(PIXLECT.user.username)}" />
+      <div id="chNameHint" style="font-size:11.5px;margin-top:5px;color:var(--muted);display:none"></div>
     </div>
     <div class="field">
       <label for="chHandle">Handle</label>
@@ -165,21 +166,50 @@ export function promptCreateChannel(ctx) {
     chAvData = e.target.value.trim();
     updateAvPreview();
   });
-  nameInput.addEventListener('input', updateAvPreview);
+  const isNameTaken = (v) => {
+    const n = String(v || '').trim().toLowerCase().replace(/\s+/g, ' ');
+    if (!n) return null;
+    const hit = Object.values(state.channels || {}).find(c => c && String(c.name || '').trim().toLowerCase().replace(/\s+/g, ' ') === n);
+    return hit || null;
+  };
+  const nameHint = document.getElementById('chNameHint');
+  const updateNameHint = () => {
+    if (!nameHint) return;
+    const hit = isNameTaken(nameInput.value);
+    if (hit) {
+      nameHint.style.display = '';
+      nameHint.style.color = 'var(--accent)';
+      nameHint.textContent = `⚠ "${hit.name}" is already taken — pick a different name.`;
+    } else {
+      nameHint.style.display = 'none';
+    }
+  };
+  nameInput.addEventListener('input', () => { updateAvPreview(); updateNameHint(); });
+  updateNameHint();
 
   document.getElementById('chCreateBtn').onclick = async () => {
     const name = nameInput.value.trim();
     const handle = handleInput.value.trim();
     if (!name) { toast('Channel name is required'); return; }
-    const avatar = chAvMode === 'emoji' ? '' : chAvData;
-    await saveChannel(P, { name, handle, avatar });
-    await addChannelToIndex(P);
-    await setActiveChannel(P);
-    ctx.closeModal();
-    toast('PIXELChannel created 🎉');
-    renderTopbar();
-    renderSidebar();
-    render(true);
+    if (isNameTaken(name)) { toast(`"${isNameTaken(name).name}" is already taken — choose a different name.`); return; }
+    if (handle) {
+      const normH = v => String(v || '').trim().toLowerCase().replace(/\s+/g, ' ');
+      const dupHandle = Object.values(state.channels || {}).find(c => c && normH(c.handle) === normH(handle));
+      if (dupHandle) { toast(`The handle "${dupHandle.handle}" is already taken — choose a different handle.`); return; }
+    }
+    try {
+      const avatar = chAvMode === 'emoji' ? '' : chAvData;
+      await saveChannel(P, { name, handle, avatar });
+      await addChannelToIndex(P);
+      await setActiveChannel(P);
+      ctx.closeModal();
+      toast('PIXELChannel created 🎉');
+      renderTopbar();
+      renderSidebar();
+      render(true);
+    } catch (e) {
+      toast(e?.message || 'Could not create channel');
+    }
   };
 }
 
@@ -333,6 +363,7 @@ export function promptEditChannel(ctx) {
       renderSidebar();
       render(true);
     } catch (e) {
+      toast(e?.message || 'Could not update channel');
       // saveChannel already toasts; keep modal open
     }
   };

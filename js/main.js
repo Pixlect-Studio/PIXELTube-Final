@@ -445,6 +445,25 @@ async function setActiveChannel(cid) {
 
 async function saveChannel(cid, data) {
   const existing = state.channels[cid] || {};
+
+  /* Uniqueness guard: no two channels may share the same name or handle.
+     Compare case/space-insensitively and exclude the channel being saved
+     (so editing a channel keeps its own name/handle). */
+  const norm = v => String(v || '').trim().toLowerCase().replace(/\s+/g, ' ');
+  const newName = norm(data.name || existing.name);
+  const newHandle = norm(data.handle || existing.handle);
+  const conflict = Object.entries(state.channels || {}).find(([id, c]) =>
+    c && id !== cid && c.id !== cid && (
+      (newName && norm(c.name) === newName) ||
+      (newHandle && newHandle !== '@' && norm(c.handle) === newHandle)
+    ));
+  if (conflict) {
+    const c = conflict[1];
+    throw new Error(newName && norm(c.name) === newName
+      ? `The channel name "${c.name}" is already taken. Choose a different name.`
+      : `The handle "${c.handle}" is already taken. Choose a different handle.`);
+  }
+
   const ch = {
     id: cid,
     name: data.name || existing.name || PIXLECT.user.username,
@@ -486,7 +505,12 @@ async function createExtraChannel(data) {
     return null;
   }
   const cid = 'c_' + Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
-  await saveChannel(cid, data);
+  try {
+    await saveChannel(cid, data);
+  } catch (e) {
+    toast(e?.message || 'Could not create channel');
+    return null;
+  }
   await addChannelToIndex(cid);
   await setActiveChannel(cid);
   renderTopbar();
@@ -1242,7 +1266,7 @@ function promptCreateExtraChannel() {
     <h2>Add a channel</h2>
     <p class="lede">You've made <b>${extraChannelCount()}</b> of ${MAX_EXTRA_CHANNELS} extra channels.</p>
     <div class="avatar-preview"><div class="av" id="chAvPreview">N</div><div class="meta"><strong>New channel</strong><small>Extra channels are separate from your primary</small></div></div>
-    <div class="field"><label for="chName">Channel name *</label><input id="chName" type="text" maxlength="60" placeholder="e.g. Pixel Gaming" /></div>
+    <div class="field"><label for="chName">Channel name *</label><input id="chName" type="text" maxlength="60" placeholder="e.g. Pixel Gaming" /><div id="chNameHint" style="font-size:11.5px;margin-top:5px;color:var(--muted);display:none"></div></div>
     <div class="field"><label for="chHandle">Handle</label><input id="chHandle" type="text" maxlength="30" placeholder="@pixelgaming" /></div>
     <div class="form-actions"><button type="button" class="btn-secondary" onclick="document.getElementById('modalRoot').innerHTML=''">Cancel</button><button type="button" class="btn-primary" id="chCreateBtn">Create channel</button></div>
   `);
@@ -1258,6 +1282,14 @@ function promptCreateExtraChannel() {
       handleInput.value = slug ? ('@' + slug) : '';
     }
     avPreview.innerHTML = esc(initial(nameInput.value || 'N'));
+    const n = nameInput.value.trim().toLowerCase().replace(/\s+/g, ' ');
+    const hint = document.getElementById('chNameHint');
+    const hit = n && Object.values(state.channels || {}).find(c => c && String(c.name || '').trim().toLowerCase().replace(/\s+/g, ' ') === n);
+    if (hit) {
+      hint.style.display = '';
+      hint.style.color = 'var(--accent)';
+      hint.textContent = `⚠ "${hit.name}" is already taken — pick a different name.`;
+    } else if (hint) hint.style.display = 'none';
   });
   handleInput.addEventListener('input', () => { handleInput.dataset.touched = '1'; });
   avPreview.innerHTML = esc(initial(nameInput.value || 'N'));
@@ -1266,8 +1298,16 @@ function promptCreateExtraChannel() {
     const name = nameInput.value.trim();
     const handle = handleInput.value.trim() || ('@' + name.toLowerCase().replace(/\s+/g, ''));
     if (!name) { toast('Channel name is required'); return; }
-    const cid = await createExtraChannel({ name, handle, avatar: chAvData });
-    if (cid) closeModal();
+    const dupName = Object.values(state.channels || {}).find(c => c && String(c.name || '').trim().toLowerCase().replace(/\s+/g, ' ') === name.toLowerCase().replace(/\s+/g, ' '));
+    if (dupName) { toast(`"${dupName.name}" is already taken — choose a different name.`); return; }
+    const dupHandle = handle.trim() && Object.values(state.channels || {}).find(c => c && String(c.handle || '').trim().toLowerCase().replace(/\s+/g, ' ') === handle.toLowerCase().replace(/\s+/g, ' '));
+    if (dupHandle) { toast(`The handle "${dupHandle.handle}" is already taken — choose a different handle.`); return; }
+    try {
+      const cid = await createExtraChannel({ name, handle, avatar: chAvData });
+      if (cid) closeModal();
+    } catch (e) {
+      toast(e?.message || 'Could not create channel');
+    }
   };
 }
 

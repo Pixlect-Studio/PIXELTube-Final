@@ -7,13 +7,18 @@
   'use strict';
 
   const THEMES = [
-    { id: 'midnight', name: 'Midnight', color: '#3B82F6' },
-    { id: 'violet',   name: 'Violet',   color: '#7C5CFF' },
-    { id: 'emerald',  name: 'Emerald',  color: '#10B981' },
-    { id: 'rose',     name: 'Rose',     color: '#F43F5E' },
-    { id: 'amber',    name: 'Amber',    color: '#F59E0B' },
-    { id: 'cyan',     name: 'Cyan',     color: '#06B6D4' },
-    { id: 'mono',     name: 'Mono',     color: '#9CA3AF' }
+    { id: 'midnight', name: 'Midnight', color: '#3B82F6', grad: 'linear-gradient(135deg,#0b1220,#1e3a8a)' },
+    { id: 'violet',   name: 'Violet',   color: '#7C5CFF', grad: 'linear-gradient(135deg,#1a1033,#7C5CFF)' },
+    { id: 'emerald',  name: 'Emerald',  color: '#10B981', grad: 'linear-gradient(135deg,#04160f,#10B981)' },
+    { id: 'rose',     name: 'Rose',     color: '#F43F5E', grad: 'linear-gradient(135deg,#1c0509,#F43F5E)' },
+    { id: 'amber',    name: 'Amber',    color: '#F59E0B', grad: 'linear-gradient(135deg,#1a1002,#F59E0B)' },
+    { id: 'cyan',     name: 'Cyan',     color: '#06B6D4', grad: 'linear-gradient(135deg,#041418,#06B6D4)' },
+    { id: 'mono',     name: 'Mono',     color: '#9CA3AF', grad: 'linear-gradient(135deg,#111,#9CA3AF)' },
+    { id: 'crimson',  name: 'Crimson',  color: '#e50914', grad: 'linear-gradient(135deg,#160203,#e50914)' },
+    { id: 'synthwave',name: 'Synthwave',color: '#ff2a6d', grad: 'linear-gradient(135deg,#12002e,#ff2a6d 55%,#00f5d4)' },
+    { id: 'sunset',   name: 'Sunset',   color: '#fb7185', grad: 'linear-gradient(135deg,#2a0a3a,#fb7185 60%,#fbbf24)' },
+    { id: 'matrix',   name: 'Matrix',   color: '#22c55e', grad: 'linear-gradient(135deg,#000,#14532d)' },
+    { id: 'sky',      name: 'Sky',      color: '#0ea5e9', grad: 'linear-gradient(135deg,#082f49,#0ea5e9)' }
   ];
 
   const LS_THEME  = 'pixeltube-theme';
@@ -29,7 +34,8 @@
     { id: '1',       name: '8-Bit Console',  hint: 'Arcade power-on drop' },
     { id: '2',       name: 'Cyber Glitch',   hint: 'RGB chromatic snap' },
     { id: '3',       name: 'Warp Starfield', hint: 'Hyperspace slam forward' },
-    { id: '4',       name: 'Neon Laser Etch',hint: 'Synthwave laser materialize' }
+    { id: '4',       name: 'Neon Laser Etch',hint: 'Synthwave laser materialize' },
+    { id: '5',       name: 'Retro Invasion', hint: 'Pixel swarm attacks, lasers defend' }
   ];
   const getBootStyle = () => {
     try { return localStorage.getItem(LS_BOOT_STYLE) || 'auto'; }
@@ -56,6 +62,8 @@
     try { localStorage.setItem(LS_ACCENT, accent); } catch (e) {}
   }
 
+  const esc = (v) => String(v ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
   let panelRoot = null;
 
   function buildPanel() {
@@ -67,7 +75,19 @@
         <div class="settings-sub">Personalize how PIXELTube looks on this device.</div>
 
         <div class="settings-group">
-          <label class="settings-label">Appearance</label>
+          <label class="settings-label">Preview</label>
+          <div class="settings-preview" id="settingsPreview" data-accent="${esc(accent)}" data-theme="${esc(mode)}">
+            <div class="sp-topbar"><span class="sp-dot"></span><span class="sp-bar"></span><span class="sp-chip"></span></div>
+            <div class="sp-body">
+              <div class="sp-card"><div class="sp-thumb"></div><div class="sp-lines"><span></span><span></span></div></div>
+              <div class="sp-card"><div class="sp-thumb"></div><div class="sp-lines"><span></span><span></span></div></div>
+              <div class="sp-card"><div class="sp-thumb"></div><div class="sp-lines"><span></span><span></span></div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="settings-group">
+          <label class="settings-label">Mode</label>
           <div class="mode-row">
             <button class="mode-btn ${mode === 'dark' ? 'active' : ''}" data-settings-mode="dark" type="button">
               <svg viewBox="0 0 24 24"><path d="M9.37 5.51A8 8 0 0 0 18.49 14.6 8.5 8.5 0 1 1 9.37 5.5z"/></svg>
@@ -82,10 +102,10 @@
 
         <div class="settings-group">
           <label class="settings-label">Accent color</label>
-          <div class="theme-grid">
+          <div class="theme-grid cols-4">
             ${THEMES.map(t => `
               <button class="theme-swatch ${t.id === accent ? 'active' : ''}" data-settings-accent="${t.id}" type="button" title="${t.name}">
-                <span class="dot" style="background:${t.color}"></span>
+                <span class="dot" style="background:${t.grad || t.color}"></span>
                 <span>${t.name}</span>
               </button>
             `).join('')}
